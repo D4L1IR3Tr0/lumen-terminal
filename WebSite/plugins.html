@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumen plugins</title>
+  <meta name="description" content="Plugins for Lumen, the tiling terminal: plain JavaScript, hot reloaded, with permissions you can read before enabling.">
+  <meta name="theme-color" content="#1d2021">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .page-head { position: relative; overflow: hidden; }
+    .page-head canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .55; }
+    .page-head::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, var(--crust) 25%, transparent 80%), linear-gradient(180deg, transparent 60%, var(--crust)); pointer-events: none; }
+    .page-head .wrap { position: relative; z-index: 1; pointer-events: none; }
+    .page-head .wrap > * { pointer-events: auto; }
+    .page-head pre { margin: 0 0 10px; color: var(--accent); font-size: clamp(7px, 1.1vw, 12px); line-height: 1.05; filter: drop-shadow(0 0 18px var(--glow)); }
+  </style>
+</head>
+<body>
+
+  <header class="bar" id="bar">
+    <a class="logo" href="index.html"><span class="logo-mark">&gt;_</span>lumen</a>
+    <nav class="ws">
+      <a href="index.html#home"><b>1</b><span>home</span></a>
+      <a href="index.html#tiling"><b>2</b><span>tiling</span></a>
+      <a href="index.html#features"><b>3</b><span>features</span></a>
+      <a href="index.html#themes"><b>4</b><span>themes</span></a>
+      <a href="plugins.html" class="active"><b>5</b><span>plugins</span></a>
+    </nav>
+    <div class="bar-mid"><b>plugins</b> · ~/.lumen/plugins</div>
+    <div class="bar-right">
+      <span class="stat">cpu<i id="cpu"></i></span>
+      <span class="clock" id="clock">00:00</span>
+      <a class="btn sm" href="index.html#download">Download</a>
+    </div>
+  </header>
+
+  <div class="page-head">
+    <canvas id="head-pond" aria-hidden="true"></canvas>
+    <div class="wrap">
+<pre aria-hidden="true">┌─┐┬  ┬ ┬┌─┐┬┌┐┌┌─┐
+├─┘│  │ ││ ┬││││└─┐
+┴  ┴─┘└─┘└─┘┴┘└┘└─┘</pre>
+      <span class="kicker" data-n="~/.lumen/plugins">catalog</span>
+      <h2>Make Lumen yours.</h2>
+      <p class="sub">Plugins are single JavaScript files. They load live, unload cleanly, and say which permissions they need. Install one in a click from the Plugins panel, or drop the file in <code>~/.lumen/plugins</code>.</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="tools">
+      <label class="search"><input id="q" placeholder="Search plugins…" spellcheck="false" autocomplete="off"></label>
+      <div class="cats" id="cats"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+
+    <div class="submit">
+      <div>
+        <h3 style="margin:0 0 4px">Made a plugin?</h3>
+        <span class="muted">Share it with everyone. The submission flow is on its way.</span>
+      </div>
+      <div class="cta">
+        <a class="btn ghost todo" href="#" data-todo="Docs coming soon">Plugin API docs</a>
+        <a class="btn todo" href="#" data-todo="Submissions open soon">Submit a plugin</a>
+      </div>
+    </div>
+  </main>
+
+  <footer style="margin-top:80px">
+    <div class="wrap">
+      <div class="wave" id="wave"></div>
+      <div class="cols">
+        <span><span class="accent">&gt;_ lumen</span> · open source, MIT</span>
+        <nav><a href="index.html">Home</a><a class="todo" href="#" data-todo="GitHub link coming soon">GitHub</a><a href="index.html#download">Download</a></nav>
+      </div>
+    </div>
+  </footer>
+
+  <div class="soon" id="soon"></div>
+
+  <script src="assets/js/koi.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/plugins.js"></script>
+</body>
+</html>

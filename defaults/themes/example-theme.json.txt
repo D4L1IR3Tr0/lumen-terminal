@@ -1,0 +1,20 @@
+// To create a theme: copy this file as "my-theme.json" in this folder.
+// It shows up in the picker right away (Ctrl+Shift+T) with the id "my-theme".
+// The "ui" section is optional: it is derived from the colors when omitted.
+{
+  "name": "My theme",
+  "light": false,
+  "background": "#1b1d2b",
+  "foreground": "#d6deeb",
+  "cursor": "#80a4c2",
+  "selectionBackground": "#2c3350",
+  "black": "#1b1d2b", "red": "#ef5350", "green": "#22da6e", "yellow": "#addb67",
+  "blue": "#82aaff", "magenta": "#c792ea", "cyan": "#21c7a8", "white": "#d6deeb",
+  "brightBlack": "#575656", "brightRed": "#ef5350", "brightGreen": "#22da6e", "brightYellow": "#ffeb95",
+  "brightBlue": "#82aaff", "brightMagenta": "#c792ea", "brightCyan": "#7fdbca", "brightWhite": "#ffffff",
+  "ui": {
+    "crust": "#11121c",
+    "accent": "#82aaff",
+    "accent2": "#c792ea"
+  }
+}

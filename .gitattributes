@@ -1,0 +1,7 @@
+# LF everywhere (Windows, Linux and macOS builds read the same files)
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.jpg binary
+*.woff2 binary

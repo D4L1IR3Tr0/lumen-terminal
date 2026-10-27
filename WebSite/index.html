@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumen: a tiling terminal that feels alive</title>
+  <meta name="description" content="Lumen is an open-source tiling terminal inspired by omarchy and Hyprland: workspaces, live themes, ASCII koi, command blocks, plugins in plain JavaScript and your own AI agents.">
+  <meta name="theme-color" content="#1d2021">
+  <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Lumen's own top bar, as the site navigation: workspaces are the sections. -->
+  <header class="bar" id="bar">
+    <a class="logo" href="#home"><span class="logo-mark">&gt;_</span>lumen</a>
+    <nav class="ws" id="ws">
+      <a href="#home" class="active"><b>1</b><span>home</span></a>
+      <a href="#tiling"><b>2</b><span>tiling</span></a>
+      <a href="#features"><b>3</b><span>features</span></a>
+      <a href="#themes"><b>4</b><span>themes</span></a>
+      <a href="#plugins"><b>5</b><span>plugins</span></a>
+    </nav>
+    <div class="bar-mid"><b>Windows PowerShell</b> · ~/lumen <span class="accent">⎇ main</span></div>
+    <div class="bar-right">
+      <span class="stat">cpu<i id="cpu"></i></span>
+      <span class="clock" id="clock">00:00</span>
+      <a class="btn sm ghost todo" href="#" data-todo="GitHub link coming soon" aria-label="GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.4 9.4 0 0 1 12 6.84c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.81c0 .27.18.6.69.49A10.1 10.1 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>
+        <span>Star</span>
+      </a>
+      <a class="btn sm" href="#download">Download</a>
+    </div>
+  </header>
+
+  <!-- ─── Hero: the koi pond ─────────────────────────────────────────── -->
+  <section class="hero" id="home">
+    <canvas class="pond" id="pond" aria-hidden="true"></canvas>
+    <div class="wrap hero-in">
+      <span class="tag"><b>v0.1</b> open source · MIT · Windows</span>
+      <div class="ascii-logo" id="ascii-logo" aria-label="Lumen"></div>
+      <h1>A tiling terminal that <span class="hl">feels alive</span>.</h1>
+      <p class="lead"><span id="typed" class="typed"></span></p>
+      <div class="cta">
+        <a class="btn" href="#download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          Download for Windows <small>v0.1.0</small>
+        </a>
+        <a class="btn ghost todo" href="#" data-todo="GitHub link coming soon">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.4 9.4 0 0 1 12 6.84c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.81c0 .27.18.6.69.49A10.1 10.1 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="install-chip"><code>winget install Lumen.Terminal</code><button data-copy="winget install Lumen.Terminal">copy</button><span class="muted" style="font-size:11px;padding-right:6px">soon</span></div>
+      <div class="meta"><span>Windows 10 / 11</span><span>PowerShell · cmd · Git Bash · WSL</span><span>~130 MB</span></div>
+    </div>
+    <div class="pond-hint">move the mouse: the koi are curious · click: drop a pebble</div>
+    <div class="scroll-hint">↓ scroll</div>
+  </section>
+
+  <!-- ─── Tiling demo ────────────────────────────────────────────────── -->
+  <section id="tiling">
+    <div class="wrap">
+      <span class="kicker reveal" data-n="02">Tiling, Hyprland-style</span>
+      <h2 class="reveal d1">Split, swap, zoom. <span class="muted">Never drag a window again.</span></h2>
+      <p class="sub reveal d2">Every new terminal takes its place on its own, in five workspaces you jump between with <kbd>Alt</kbd>+<kbd>1…9</kbd>. Everything is a shortcut, and the palette knows them all.</p>
+      <div class="window reveal d3" id="demo">
+        <div class="win-bar">
+          <span class="logo-mark" style="width:22px;height:22px;font-size:10px">&gt;_</span>
+          <nav class="ws"><a class="active"><b>1</b></a><a><b>2</b></a><a><b>3</b></a></nav>
+          <span class="mid"><span class="pill" id="demo-shell">PowerShell</span> ~/projects/lumen</span>
+          <div class="dots"><i></i><i></i><i></i></div>
+        </div>
+        <div class="stage" id="stage"></div>
+        <div class="keycast" id="keycast"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider wrap" data-divider></div>
+
+  <!-- ─── Features ───────────────────────────────────────────────────── -->
+  <section id="features">
+    <div class="wrap">
+      <span class="kicker reveal" data-n="03">Everything a terminal should be</span>
+      <h2 class="reveal d1">Fast, keyboard-first, <span class="hl">and beautiful</span>.</h2>
+      <p class="sub reveal d2">WebGL rendering, ConPTY shells and a sidebar full of tools. Built for people who live in the terminal and like it to look good.</p>
+      <div class="bento">
+        <article class="card xl reveal" data-glow>
+          <span class="ico">⊞</span>
+          <h3>Workspaces & dwindle tiling</h3>
+          <p>Split right, split down, swap with <kbd>Alt</kbd>+<kbd>Shift</kbd>+arrows, resize with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>, zoom one pane. Your layout comes back when you restart.</p>
+          <div class="art" id="art-tiling"></div>
+        </article>
+        <article class="card reveal d1" data-glow>
+          <span class="ico">›</span>
+          <h3>Command palette</h3>
+          <p><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>: every action, theme and setting.</p>
+          <div class="palette-demo" id="palette-demo"></div>
+        </article>
+        <article class="card reveal" data-glow>
+          <span class="ico">~</span>
+          <h3>Animated backgrounds</h3>
+          <p>Koi, aurora, rain, hyperspace… tuned to stay smooth.</p>
+          <canvas class="mini" id="mini-pond"></canvas>
+        </article>
+        <article class="card reveal d1" data-glow>
+          <span class="ico">✦</span>
+          <h3>Bring your own AI</h3>
+          <p>Run the official agents with your own account. Lumen never bills you.</p>
+          <div class="agents">
+            <span class="agent"><i></i>Claude Code</span>
+            <span class="agent"><i></i>Codex</span>
+            <span class="agent"><i></i>Gemini CLI</span>
+            <span class="agent"><i></i>Mistral Vibe</span>
+          </div>
+        </article>
+        <article class="card reveal d2" data-glow>
+          <span class="ico">▍</span>
+          <h3>Command blocks</h3>
+          <p>Hover a command: copy it, copy its output, run it again. Know when long builds finish.</p>
+          <div class="art" id="art-blocks"></div>
+        </article>
+        <article class="card wide reveal" data-glow>
+          <span class="ico">◧</span>
+          <h3>A sidebar full of tools</h3>
+          <p>Notes with reminders, clipboard history, favorite folders, aliases read live from your shell, and a full Git & GitHub panel: stage, commit, push, PRs, CI status.</p>
+          <div class="chips"><span class="chip on">git</span><span class="chip">notes</span><span class="chip">clipboard</span><span class="chip">folders</span><span class="chip">aliases</span><span class="chip">ai</span></div>
+          <div class="art" id="art-git"></div>
+        </article>
+        <article class="card wide reveal d1" data-glow>
+          <span class="ico">{}</span>
+          <h3>Configure it live</h3>
+          <p>One <code>config.jsonc</code>, hot-reloaded, with comments kept when Lumen edits it. Or open the settings drawer and watch every change apply instantly.</p>
+          <div class="art" id="art-config"></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Themes ─────────────────────────────────────────────────────── -->
+  <section id="themes">
+    <div class="wrap">
+      <span class="kicker reveal" data-n="04">Themes</span>
+      <h2 class="reveal d1">Pick one. <span class="muted">This page changes with it.</span></h2>
+      <p class="sub reveal d2">Twenty-two themes built in, from Tokyo Night to Matte Black, and yours in a single JSON file. Lumen switches live, without restarting a single shell.</p>
+      <div class="themes reveal d3" id="themes-grid"></div>
+    </div>
+  </section>
+
+  <!-- ─── Plugins teaser ─────────────────────────────────────────────── -->
+  <section id="plugins">
+    <div class="wrap split">
+      <div>
+        <span class="kicker reveal" data-n="05">Plugins</span>
+        <h2 class="reveal d1">Plain JavaScript. <span class="hl">Hot reloaded.</span></h2>
+        <p class="sub reveal d2">Drop a file in <code>~/.lumen/plugins</code> and it runs. Save it again and it reloads, cleanly. Commands, status items, sidebar panels, themes and CSS, with permissions you can read before enabling.</p>
+        <ul class="list reveal d2">
+          <li>Notes, Clipboard and Git ship as plugins: read them, fork them</li>
+          <li>New plugins arrive disabled, so you review them first</li>
+          <li>Ask the AI to write one for you</li>
+        </ul>
+        <div class="cta reveal d3" style="margin-top:28px">
+          <a class="btn" href="plugins.html">Browse plugins →</a>
+          <a class="btn ghost todo" href="#" data-todo="Docs coming soon">Write your own</a>
+        </div>
+      </div>
+      <pre class="code reveal d2"><span class="c">// @name Weather</span>
+<span class="c">// @description The weather in the top bar.</span>
+<span class="c">// @version 1.0.0</span>
+
+<span class="k">module</span>.exports = <span class="f">lumen</span> =&gt; {
+  <span class="k">let</span> now = <span class="s">'…'</span>;
+  lumen.statusbar.<span class="f">add</span>({
+    id: <span class="s">'weather'</span>,
+    interval: <span class="n">600000</span>,
+    text: () =&gt; now
+  });
+  <span class="f">fetch</span>(<span class="s">'https://wttr.in/?format=%t'</span>)
+    .<span class="f">then</span>(r =&gt; r.<span class="f">text</span>())
+    .<span class="f">then</span>(t =&gt; { now = t; lumen.statusbar.<span class="f">refresh</span>(); });
+};</pre>
+    </div>
+  </section>
+
+  <!-- ─── Download ───────────────────────────────────────────────────── -->
+  <section id="download">
+    <div class="wrap">
+      <div class="dl reveal">
+        <canvas id="dl-pond" aria-hidden="true"></canvas>
+        <span class="kicker" data-n="06">Download</span>
+        <h2>Get Lumen.</h2>
+        <p class="sub">Free and open source. Your settings live in <code>~/.lumen</code>, never touched by updates.</p>
+        <div class="row">
+          <a class="btn todo" href="#" data-todo="The download link is coming soon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10.5 4.4v7.1H3zM11.5 4.3 21 3v8.5h-9.5zM3 12.5h7.5v7.1L3 18.5zM11.5 12.5H21V21l-9.5-1.3z"/></svg>
+            Download for Windows <small>Lumen-Setup-0.1.0.exe · 130 MB</small>
+          </a>
+          <a class="btn ghost todo" href="#" data-todo="Release notes coming soon">Release notes</a>
+        </div>
+        <div class="os"><span class="ok">● Windows 10 / 11</span><span>macOS · soon</span><span>Linux · soon</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="wave" id="wave"></div>
+      <div class="cols">
+        <span><span class="accent">&gt;_ lumen</span> · open source, MIT · made with too many koi</span>
+        <nav>
+          <a href="plugins.html">Plugins</a>
+          <a class="todo" href="#" data-todo="GitHub link coming soon">GitHub</a>
+          <a class="todo" href="#" data-todo="Docs coming soon">Docs</a>
+          <a href="#download">Download</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <div class="soon" id="soon"></div>
+
+  <script src="assets/js/koi.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

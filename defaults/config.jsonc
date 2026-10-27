@@ -1,0 +1,139 @@
+// ┌──────────────────────────────────────────────────────────────┐
+// │  Lumen configuration                                          │
+// │  Hot-reloaded: save the file and changes apply instantly      │
+// └──────────────────────────────────────────────────────────────┘
+{
+  // Built-in themes: tokyo-night, catppuccin-mocha, rose-pine, kanagawa, gruvbox, everforest,
+  // nord, matte-black, dracula, one-dark, github-dark, night-owl, ayu-mirage, monokai-pro,
+  // solarized-dark, synthwave-84, poimandres, oxocarbon, osaka-jade, catppuccin-latte,
+  // rose-pine-dawn, flexoki-light (+ your own in ~/.lumen/themes/*.json)
+  // Tip: Ctrl+Shift+T picks one with a live preview.
+  "theme": "gruvbox",
+
+  "font": {
+    // Bundled: JetBrains Mono, Fira Code, Cascadia Code, Geist Mono, IBM Plex Mono, Source Code Pro,
+    // Commit Mono, Iosevka, Monaspace Neon, Victor Mono, Martian Mono, Intel One Mono, Space Mono,
+    // or any installed font (e.g. "CaskaydiaMono Nerd Font"). Ctrl+, to browse them.
+    "family": "JetBrains Mono",
+    "size": 14,
+    "lineHeight": 1.2,
+    "weight": "400",
+    "weightBold": "700"
+  },
+
+  "cursor": {
+    "style": "bar",               // "bar" | "block" | "underline"
+    "blink": true,
+    "width": 2,                   // bar thickness (px)
+    "inactive": "outline",        // unfocused pane: "outline" | "block" | "bar" | "underline" | "none"
+    "color": "theme"              // "theme" | "accent" | "accent2" | "#ff9e64"…
+  },
+
+  "window": {
+    "gap": 8,                     // space between panes (px)
+    "padding": 10,                // padding inside a pane (px)
+    "radius": 10,                 // pane corner radius (px)
+    "borderWidth": 2,             // focused pane border
+    "inactiveOpacity": 0.72,      // text opacity of unfocused panes (1 = off)
+    "animations": true,
+    "bar": true,                  // top bar (workspaces, title, clock)
+    "clock": true,
+    "stats": true,                // CPU / GPU / RAM in the bar
+
+    "paneOpacity": 1,             // pane background opacity (0.3 to 1)
+
+    // Real Windows 11 transparency: "none" | "acrylic" | "mica"
+    "backgroundMaterial": "none"
+  },
+
+  // What sits behind the panes. Tip: Ctrl+, to tune it live.
+  "background": {
+    // "none" | "image" | "aurora" | "constellation" | "waves" | "koi" | "koi-blocks" | "jellyfish"
+    // | "dither" | "matrix" | "starfield" | "horizon"
+    "mode": "none",
+    "image": "",                  // a picture of ~/.lumen/backgrounds, e.g. "backgrounds/sea.jpg"
+    // "plain" | "dither" (still, theme colors) | "dither-animated" | "ascii" (drawn in characters)
+    "imageStyle": "plain",
+    "blur": 0,                    // image blur (px, plain style)
+    "dim": 0.35,                  // image darkening (0 to 1)
+    "speed": 1,                   // animation speed
+    "intensity": 0.6              // animation intensity (0 to 1)
+  },
+
+  "behavior": {
+    "copyOnSelect": false,
+    "rightClickPaste": true,      // right click copies the selection, or pastes
+    "focusFollowsMouse": false,   // the pane under the mouse gets focus
+    "scrollback": 10000,
+    "inheritCwd": true,           // new panes open in the same folder
+    "shellIntegration": true,     // folder, exit code and git tracking (PowerShell, bash, cmd)
+    "git": true,                  // git branch and status in the bar
+    "restoreSession": true,       // reopen windows, panes, layouts and folders at startup
+    "notifyAfter": 10             // notify when a command longer than this (seconds) ends in the background; 0 = off
+  },
+
+  "terminal": {
+    // How text fills a pane: "top" (classic) or "bottom" (starts at the bottom and rises)
+    "flow": "top",
+    "separators": false,          // a thin line between commands (red after a failure)
+    "blocks": true                // hover a command: copy it, copy its output, run it again
+  },
+
+  "shells": {
+    // "auto" or a profile id: pwsh, powershell, cmd, gitbash, wsl, or one of yours
+    "default": "auto",
+    // Add your own profiles:
+    // { "id": "python", "name": "Python", "command": "python.exe", "args": [] }
+    "profiles": []
+  },
+
+  // Built-in plugins (Notes, Clipboard, Git) are on by default. Turn one off: { "notes": false }
+  "builtinPlugins": {},
+
+  // Shortcuts: override anything. "" disables one.
+  // Modifiers: Ctrl, Shift, Alt, Meta
+  "keybindings": {
+    "pane.new": "Ctrl+Shift+Enter",
+    "pane.splitRight": "Ctrl+Shift+D",
+    "pane.splitDown": "Ctrl+Shift+E",
+    "pane.close": "Ctrl+Shift+W",
+    "pane.zoom": "Ctrl+Shift+Z",
+    "focus.left": "Ctrl+Shift+Left",
+    "focus.right": "Ctrl+Shift+Right",
+    "focus.up": "Ctrl+Shift+Up",
+    "focus.down": "Ctrl+Shift+Down",
+    "swap.left": "Alt+Shift+Left",
+    "swap.right": "Alt+Shift+Right",
+    "swap.up": "Alt+Shift+Up",
+    "swap.down": "Alt+Shift+Down",
+    "resize.left": "Ctrl+Alt+Left",
+    "resize.right": "Ctrl+Alt+Right",
+    "resize.up": "Ctrl+Alt+Up",
+    "resize.down": "Ctrl+Alt+Down",
+    "workspace.next": "Ctrl+Tab",
+    "workspace.prev": "Ctrl+Shift+Tab",
+    "palette.open": "Ctrl+Shift+P",
+    "theme.pick": "Ctrl+Shift+T",
+    "shell.pick": "Ctrl+Shift+S",
+    "search.open": "Ctrl+Shift+F",
+    "window.new": "Ctrl+Shift+N",
+    "window.fullscreen": "F11",
+    "settings.open": "Ctrl+,",
+    "config.open": "Ctrl+Alt+,",
+    "font.increase": "Ctrl+=",
+    "font.decrease": "Ctrl+-",
+    "font.reset": "Ctrl+0",
+    "copy": "Ctrl+Shift+C",
+    "paste": "Ctrl+Shift+V",
+    // Sidebar (hover the left edge of the window)
+    "panel.ai": "Ctrl+Shift+A",
+    "panel.notes": "Ctrl+Shift+M",
+    "panel.clipboard": "Ctrl+Shift+H",
+    "panel.git": "Ctrl+Shift+G",
+    "prompt.prev": "Ctrl+Shift+PageUp",
+    "prompt.next": "Ctrl+Shift+PageDown",
+    "panel.folders": "Ctrl+Shift+O",
+    "panel.aliases": "Ctrl+Shift+L"
+    // Workspaces use Alt+1…9 (go) and Alt+Shift+1…9 (move the pane)
+  }
+}
