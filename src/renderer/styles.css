@@ -1656,3 +1656,126 @@ body.mac .win-controls { display: none; }
 .ai-auth .p-buttons { margin: 0; }
 .ai-auth .ai-auth-hint { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
 .ai-warn { border-color: var(--yellow); background: color-mix(in srgb, var(--yellow) 10%, transparent); }
+
+/* ─── Folders: places, tree, graph ──────────────────────────────────── */
+
+.drawer-panel[data-panel="folders"] .drawer-content { display: flex; flex-direction: column; padding-bottom: 10px; }
+.fx-places { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.fx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 150px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.fx-chip:hover { color: var(--fg); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+.fx-chip.on { border-color: var(--accent); color: var(--fg); background: var(--accent-soft); }
+.fx-chip svg.i { width: 11px; height: 11px; color: var(--yellow); }
+.fx-chip.add svg.i { color: var(--muted); }
+.fx-chip [data-act="unfav"] { display: none; margin-left: 2px; color: var(--muted); }
+.fx-chip.fav:hover [data-act="unfav"] { display: inline; }
+.fx-chip [data-act="unfav"]:hover { color: var(--red); }
+.fx-crumbs { display: flex; align-items: center; gap: 2px; margin-bottom: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; font: 11.5px var(--mono); }
+.fx-crumbs::-webkit-scrollbar { display: none; }
+.fx-crumbs button { padding: 2px 4px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+.fx-crumbs button:last-of-type { color: var(--fg); font-weight: 700; }
+.fx-crumbs button:hover { background: var(--fg-soft); color: var(--fg); }
+.fx-crumbs span { color: var(--border); }
+.fx-crumbs em { margin-left: auto; padding-left: 8px; color: var(--green); font-size: 10px; font-style: normal; }
+.fx-filter { margin-bottom: 6px; }
+
+.fx-tree { flex: 1; min-height: 120px; overflow: auto; outline: none; font-size: 12px; }
+.fx-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 6px 0 calc(6px + var(--d) * 14px);
+  border-radius: 6px;
+  color: var(--fg);
+  cursor: pointer;
+  user-select: none;
+}
+/* Indentation guides */
+.fx-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+  width: calc(var(--d) * 14px);
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--border) 70%, transparent) 0 1px, transparent 1px 14px);
+  pointer-events: none;
+}
+.fx-row:hover { background: var(--fg-soft); }
+.fx-row.sel { background: var(--accent-soft); }
+.fx-tree:focus .fx-row.sel { box-shadow: inset 0 0 0 1px var(--accent); }
+.fx-row.hid { opacity: .55; }
+.fx-twist { width: 10px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
+.fx-ico { display: grid; place-items: center; width: 14px; height: 14px; flex: none; color: var(--muted); font-size: 14px; line-height: 1; }
+.fx-ico.k-dir { width: 13px; height: 10px; border-radius: 2px 3px 3px 3px; background: color-mix(in srgb, var(--accent) 80%, transparent); position: relative; }
+.fx-ico.k-dir::before { content: ''; position: absolute; top: -2px; left: 0; width: 6px; height: 3px; border-radius: 2px 2px 0 0; background: inherit; }
+.fx-ico.k-code { color: var(--accent2); } .fx-ico.k-doc { color: var(--green); } .fx-ico.k-data { color: var(--yellow); } .fx-ico.k-media { color: var(--red); }
+.fx-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fx-acts { display: none; gap: 1px; }
+.fx-row:hover .fx-acts { display: flex; }
+.fx-acts button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; }
+.fx-acts button:hover { background: var(--overlay); color: var(--fg); }
+.fx-acts svg.i { width: 12px; height: 12px; }
+
+.fx-graph-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 2px 6px; color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.fx-graph-head .p-link { letter-spacing: 0; text-transform: none; font-weight: 400; }
+.fx-graph { position: relative; flex: none; height: 260px; border: 1px solid var(--border); border-radius: 10px; background: color-mix(in srgb, var(--crust) 60%, transparent); overflow: hidden; }
+.fx-graph canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+/* The same browser as a pane (Ctrl+Shift+S → Graph / Files). */
+.pane-view { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 10px 12px 12px; outline: none; font-size: 12px; }
+.fx-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.fx-bar .fx-crumbs { flex: 1; min-width: 0; margin: 0; }
+.fx-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.fx-actions .fx-fit { margin-left: 6px; }
+.fx-mode-graph .fx-graph { flex: 1; height: auto; min-height: 0; border-radius: 8px; }
+.fx-mode-files .fx-tree { min-height: 0; }
+.fx-graph-tip { position: absolute; z-index: 2; max-width: 70%; padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--crust); color: var(--fg); font: 11px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+
+/* ─── Dither colors: two tiles previewing the real effect ───────────── */
+
+.s-dpick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 210px; }
+.s-dpick button {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 0 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: 11px var(--mono);
+  text-align: left;
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+}
+.s-dpick canvas {
+  width: 100%;
+  height: 16px;
+  border-radius: 3px;
+  image-rendering: pixelated;
+  opacity: .45;
+  filter: saturate(.6);
+  transition: opacity .2s, filter .2s;
+}
+.s-dpick button:hover { color: var(--fg); }
+.s-dpick button:hover canvas { opacity: .75; }
+.s-dpick button.active { color: var(--fg); border-bottom-color: var(--accent); }
+.s-dpick button.active canvas { opacity: 1; filter: none; }
+.s-dpick span::before { content: '○ '; color: var(--muted); }
+.s-dpick button.active span::before { content: '● '; color: var(--accent); }

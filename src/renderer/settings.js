@@ -79,6 +79,13 @@
           <div class="s-gallery" data-gallery></div>
           ${segmented(['background', 'imageStyle'], 'Style', [['plain', 'Plain'], ['dither', 'Dither'], ['dither-animated', 'Animated'], ['ascii', 'ASCII']])}
           <div data-row="background.blur">${slider(['background', 'blur'], 'Blur', 0, 40, 1, px)}</div>
+          <div class="s-row" data-row="background.ditherColors">
+            <span class="s-label">Dither colors</span>
+            <div class="s-dpick" data-dpick="background.ditherColors">
+              <button data-dpick-value="image" title="The picture keeps its own colors"><canvas width="72" height="14"></canvas><span>image</span></button>
+              <button data-dpick-value="theme" title="Four tones of the current theme"><canvas width="72" height="14"></canvas><span>theme</span></button>
+            </div>
+          </div>
           ${slider(['background', 'dim'], 'Darken', 0, 0.9, 0.01, pct)}
           <div class="s-file">
             <span class="s-file-name">~/.lumen/backgrounds</span>
@@ -228,6 +235,12 @@
         sync();
         return;
       }
+      const dpick = e.target.closest('[data-dpick-value]');
+      if (dpick) {
+        host.set(dpick.parentElement.dataset.dpick.split('.'), dpick.dataset.dpickValue);
+        sync();
+        return;
+      }
       const flow = e.target.closest('[data-flow]');
       if (flow) { host.set(['terminal', 'flow'], flow.dataset.flow); sync(); return; }
       const cursor = e.target.closest('[data-cursor]');
@@ -328,6 +341,62 @@
     list.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
   }
 
+  // The two choices of "Dither colors" preview the real effect: a strip dithered with a 4×4
+  // Bayer matrix, from the picture itself or through the theme's four tones.
+  const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
+  let previewFor = null;
+
+  function hexRGB(hex) {
+    const h = hex.trim().replace('#', '');
+    const n = parseInt(h.length === 3 ? h.replace(/./g, c => c + c) : h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  function ditherStrip(canvas, pixel) {
+    const c = canvas.getContext('2d');
+    const { width: w, height: h } = canvas;
+    const img = c.createImageData(w, h);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const [r, g, b] = pixel(x, y, BAYER4[(y & 3) * 4 + (x & 3)]);
+        const i = (y * w + x) * 4;
+        img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  async function paintDitherPreviews(box, image) {
+    // Theme: a left-to-right ramp through background → accent → accent2 → text, in 4 tones.
+    const css = getComputedStyle(document.documentElement);
+    const tones = ['--bg', '--accent', '--accent2', '--fg'].map(v => hexRGB(css.getPropertyValue(v) || '#000'));
+    ditherStrip(box.querySelector('[data-dpick-value="theme"] canvas'), (x, y, th) => {
+      const lv = Math.min(2.999, (x / 71) * 3);
+      const lo = lv | 0;
+      return tones[lo + (lv - lo > th ? 1 : 0)];
+    });
+    // Image: the chosen picture, squeezed into the strip, 4 levels per channel.
+    if (!image || image === previewFor) return;
+    previewFor = image;
+    const url = await host.imageSample(image);
+    if (!url || previewFor !== image) return;
+    const pic = new Image();
+    pic.onload = () => {
+      const tmp = document.createElement('canvas');
+      tmp.width = 72;
+      tmp.height = 14;
+      const t = tmp.getContext('2d', { willReadFrequently: true });
+      const scale = Math.max(72 / pic.width, 14 / pic.height);
+      t.drawImage(pic, (72 - pic.width * scale) / 2, (14 - pic.height * scale) / 2, pic.width * scale, pic.height * scale);
+      const src = t.getImageData(0, 0, 72, 14).data;
+      ditherStrip(box.querySelector('[data-dpick-value="image"] canvas'), (x, y, th) => {
+        const i = (y * 72 + x) * 4;
+        return [0, 1, 2].map(k => Math.min(3, Math.floor((src[i + k] / 255) * 3 + th)) * 85);
+      });
+    };
+    pic.src = url;
+  }
+
   // Pictures of ~/.lumen/backgrounds: click one to use it, + to add one (it is copied there).
   let galleryRun = 0;
   async function renderGallery() {
@@ -376,7 +445,14 @@
 
     const image = host.get(['background', 'image']);
     renderGallery();
-    root.querySelector('[data-row="background.blur"]').style.display = (host.get(['background', 'imageStyle']) || 'plain') === 'plain' ? '' : 'none';
+    const imageStyle = host.get(['background', 'imageStyle']) || 'plain';
+    root.querySelector('[data-row="background.blur"]').style.display = imageStyle === 'plain' ? '' : 'none';
+    // The dither palette switch only matters for the two dither styles.
+    root.querySelector('[data-row="background.ditherColors"]').style.display = imageStyle.startsWith('dither') ? '' : 'none';
+    const dpick = root.querySelector('[data-dpick="background.ditherColors"]');
+    const dv = host.get(['background', 'ditherColors']) === 'theme' ? 'theme' : 'image';
+    dpick.querySelectorAll('[data-dpick-value]').forEach(b => b.classList.toggle('active', b.dataset.dpickValue === dv));
+    if (imageStyle.startsWith('dither')) paintDitherPreviews(dpick, image);
     const thumb = root.querySelector('.p-image');
     thumb.style.backgroundImage = image ? `url("${host.fileUrl(image)}")` : '';
     thumb.classList.toggle('has-image', !!image);

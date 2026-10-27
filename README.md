@@ -61,7 +61,7 @@ touched by installing, updating or uninstalling.
 
 ## Live settings (`Ctrl+,`)
 
-- **Theme**: 22 themes (Tokyo Night, Catppuccin, Rosé Pine, Dracula, Gruvbox, Nord, Kanagawa, Synthwave '84…)
+- **Theme**: 23 themes (Gruvbox, Solar Autumn, Tokyo Night, Catppuccin, Rosé Pine, Dracula, Nord, Kanagawa, Synthwave '84…)
 - **Background**: Aurora, Constellation, Waves, ASCII koi and block koi (goldfish seen from above),
   ASCII jellyfish, Dither (Bayer), Digital rain, Hyperspace, Retro horizon, or an image (blur, darken).
   Speed and intensity are adjustable. Every animated background costs under ~2 ms per frame and

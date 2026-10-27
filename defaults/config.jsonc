@@ -4,7 +4,7 @@
 // └──────────────────────────────────────────────────────────────┘
 {
   // Built-in themes: tokyo-night, catppuccin-mocha, rose-pine, kanagawa, gruvbox, everforest,
-  // nord, matte-black, dracula, one-dark, github-dark, night-owl, ayu-mirage, monokai-pro,
+  // nord, matte-black, solar-autumn, dracula, one-dark, github-dark, night-owl, ayu-mirage, monokai-pro,
   // solarized-dark, synthwave-84, poimandres, oxocarbon, osaka-jade, catppuccin-latte,
   // rose-pine-dawn, flexoki-light (+ your own in ~/.lumen/themes/*.json)
   // Tip: Ctrl+Shift+T picks one with a live preview.
@@ -54,6 +54,7 @@
     "image": "",                  // a picture of ~/.lumen/backgrounds, e.g. "backgrounds/sea.jpg"
     // "plain" | "dither" (still, theme colors) | "dither-animated" | "ascii" (drawn in characters)
     "imageStyle": "plain",
+    "ditherColors": "image",      // dither styles: "image" (the picture's own colors) | "theme"
     "blur": 0,                    // image blur (px, plain style)
     "dim": 0.35,                  // image darkening (0 to 1)
     "speed": 1,                   // animation speed

@@ -206,7 +206,8 @@
       animate: S.cfg.window.animations !== false,
       font: fontStack(),
       imagePath: image ? absPath(image) : '',
-      dim: b.dim ?? 0.35
+      dim: b.dim ?? 0.35,
+      ditherColors: b.ditherColors === 'theme' ? 'theme' : 'image'
     }, {
       base: t.ui.crust,
       fg: t.foreground,
@@ -375,6 +376,15 @@
   const activeWs = () => S.workspaces[S.active];
   const panesOf = ws => Layout.leaves(ws.root).map(id => S.panes.get(id)).filter(Boolean);
   const focusedPane = () => S.panes.get(activeWs().focused) || null;
+  // The terminal commands act on: the focused pane, or the last terminal focused when a view
+  // (graph, files) has the focus.
+  const focusedTerm = () => {
+    const p = focusedPane();
+    if (p?.term) return p;
+    const last = S.panes.get(S.lastTerm);
+    if (last?.term && last.ws === S.active) return last;
+    return panesOf(activeWs()).find(q => q.term) || null;
+  };
 
   function switchWorkspace(i) {
     if (i === S.active || i < 0 || i >= WS_COUNT) return;
@@ -501,7 +511,13 @@
   // ─── Panes ──────────────────────────────────────────────────────────
 
   // attach: { ptyId, title, cwd } shows a process the main process already started (an agent's command).
-  async function createPane({ ws = activeWs(), target, dir, before = false, profile, cwd, attach = null } = {}) {
+  // Panes that show a view of the folder instead of a terminal (Ctrl+Shift+S).
+  const VIEWS = {
+    graph: { name: 'Graph', detail: "follows the terminal's folder" },
+    files: { name: 'Files', detail: "file browser, follows the terminal's folder" }
+  };
+
+  async function createPane({ ws = activeWs(), target, dir, before = false, profile, cwd, attach = null, view = null } = {}) {
     const id = `p${++paneSeq}`;
     const el = document.createElement('div');
     el.className = 'pane entering';
@@ -540,6 +556,26 @@
     ws.zoomed = null;
     layout(ws, { entering: id });
     renderWorkspaces();
+
+    if (view) {
+      host.className = 'pane-view';
+      pane.viewMode = view;
+      pane.profile = { id: view, name: VIEWS[view].name, kind: 'view' };
+      pane.view = LumenFiles.mount(host, panelHost, null, {
+        mode: view,
+        isVisible: () => S.active === pane.ws && S.panes.has(pane.id),
+        onRoot: path => { pane.cwd = path; if (focusedPane() === pane) updateTitle(); saveSession(); }
+      });
+      // A click keeps its own target (filter, tree, canvas): the pane only takes the focus ring.
+      el.addEventListener('mousedown', () => { if (activeWs().focused !== pane.id) focusPane(pane.id, false); }, true);
+      el.addEventListener('focusin', () => { if (activeWs().focused !== pane.id) focusPane(pane.id, false); });
+      el.addEventListener('mouseenter', () => {
+        if (S.cfg.behavior.focusFollowsMouse && !document.body.classList.contains('dragging') && !Palette.isOpen()) focusPane(pane.id);
+      });
+      await pane.view.open();
+      if (ws.index === S.active) focusPane(id);
+      return pane;
+    }
 
     const term = new Terminal(termOptions());
     const fit = new FitAddon.FitAddon();
@@ -779,7 +815,7 @@
     if (screen.style.transform !== value) screen.style.transform = value;
   }
 
-  const focusTerminal = p => p.term?.focus();
+  const focusTerminal = p => (p.view ? p.view.focus() : p.term?.focus());
 
   // ─── Command blocks ─────────────────────────────────────────────────
   // Every prompt opens a block: { marker (prompt line), inputOffset/inputX (where typing starts),
@@ -904,7 +940,7 @@
 
   // Scrolls to the previous / next prompt.
   function jumpPrompt(dir) {
-    const p = focusedPane();
+    const p = focusedTerm();
     if (!p?.blocks?.length) return;
     const top = p.term.buffer.active.viewportY;
     const lines = p.blocks.map(b => b.marker.line).filter(l => l >= 0);
@@ -914,7 +950,7 @@
   }
 
   function copyLastOutput() {
-    const p = focusedPane();
+    const p = focusedTerm();
     const b = [...(p?.blocks || [])].reverse().find(x => x.start && x.end);
     if (!b) return toast('No finished command in this pane yet');
     const text = blockOutput(p, b);
@@ -1016,6 +1052,7 @@
     if (!p) return;
     const ws = S.workspaces[p.ws];
     ws.focused = id;
+    if (p.term) S.lastTerm = id;
     for (const q of panesOf(ws)) q.el.classList.toggle('focused', q.id === id);
     // Never steal the keyboard from the palette, settings or a side panel being typed in.
     const busyElsewhere = Palette.isOpen() || Settings.isOpen() || document.activeElement?.closest?.('#drawer');
@@ -1036,6 +1073,7 @@
     ws.root = Layout.remove(ws.root, id);
     if (ws.zoomed === id) ws.zoomed = null;
     S.panes.delete(id);
+    p.view?.dispose();
     resizeObserver.unobserve(p.host);
     if (p.ptyId != null) {
       S.byPty.delete(p.ptyId);
@@ -1152,12 +1190,12 @@
 
   // ─── Clipboard & search ─────────────────────────────────────────────
 
-  function copySelection(p = focusedPane()) {
+  function copySelection(p = focusedTerm()) {
     const text = p?.term?.getSelection();
     if (text) native.clipboard.write(text);
   }
 
-  async function paste(p = focusedPane()) {
+  async function paste(p = focusedTerm()) {
     if (!p?.term) return;
     const text = await native.clipboard.read();
     if (text) insertText(p, text);
@@ -1169,7 +1207,7 @@
     p.term.focus();
   }
 
-  function openSearch(p = focusedPane()) {
+  function openSearch(p = focusedTerm()) {
     if (!p?.term) return;
     if (!p.searchEl) {
       const box = document.createElement('div');
@@ -1240,7 +1278,7 @@
     const tree = node => {
       if (node.type === 'leaf') {
         const p = S.panes.get(node.pane);
-        return { type: 'leaf', profile: p?.profile?.id || null, cwd: p?.cwd || null };
+        return { type: 'leaf', profile: p?.profile?.id || null, cwd: p?.cwd || null, view: p?.viewMode || undefined };
       }
       return { type: 'split', dir: node.dir, ratio: node.ratio, a: tree(node.a), b: tree(node.b) };
     };
@@ -1263,7 +1301,7 @@
     for (const w of list) {
       const ws = S.workspaces[w.index];
       const order = [];
-      const make = (leaf, extra = {}) => createPane({ ws, profile: profileOf(leaf.profile), cwd: leaf.cwd || undefined, ...extra });
+      const make = (leaf, extra = {}) => createPane({ ws, profile: profileOf(leaf.profile), cwd: leaf.cwd || undefined, view: VIEWS[leaf.view] ? leaf.view : undefined, ...extra });
       const build = async (node, pane) => {
         if (node.type === 'leaf') { order.push(pane); return; }
         const other = await make(firstLeaf(node.b), { target: pane.id, dir: node.dir === 'v' ? 'v' : 'h' });
@@ -1538,6 +1576,7 @@
       fileUrl,
       assets: native.assets,
       openFolder: which => native.open.path(which),
+      imageSample: p => native.image.sample(absPath(p), 256),
       onClose: refocus
     });
   }
@@ -1626,8 +1665,13 @@
     Palette.open({
       prefix: '❯',
       placeholder: 'Open a new pane with…',
-      items: S.shells.map(s => ({ id: s.id, label: s.name, detail: s.id })),
-      onSelect: item => createPane({ profile: item.id }),
+      items: [
+        ...S.shells.map(s => ({ id: s.id, label: s.name, detail: s.id })),
+        ...Object.entries(VIEWS).map(([id, v]) => ({ id: `view:${id}`, label: v.name, detail: v.detail }))
+      ],
+      onSelect: item => item.id.startsWith('view:')
+        ? createPane({ view: item.id.slice(5), cwd: focusedTerm()?.cwd || undefined })
+        : createPane({ profile: item.id }),
       onClose: refocus
     });
   }
@@ -1645,7 +1689,7 @@
     setTimeout(() => {
       if (Palette.isOpen() || Settings.isOpen()) return;
       if (Sidebar.isOpen() && document.activeElement?.closest?.('#drawer')) return;
-      focusedPane()?.term?.focus();
+      focusTerminal(focusedPane() || {});
     }, 0);
   }
 
@@ -1719,7 +1763,7 @@
     command('stats.toggle', 'Show / hide system stats', () => setSetting(['window', 'stats'], !S.cfg.window.stats), { keywords: 'cpu gpu ram' });
     command('shell.pick', 'New terminal with…', pickShell, { keywords: 'shell profile powershell cmd bash wsl' });
     command('search.open', 'Search in terminal', () => openSearch(), { keywords: 'find' });
-    command('terminal.clear', 'Clear terminal', () => focusedPane()?.term?.clear(), { keywords: 'clear reset' });
+    command('terminal.clear', 'Clear terminal', () => focusedTerm()?.term?.clear(), { keywords: 'clear reset' });
     command('copy', 'Copy', () => copySelection());
     command('paste', 'Paste', () => paste());
     command('font.increase', 'Increase font size', () => setFontDelta(S.fontDelta + 1), { keywords: 'zoom font bigger' });
@@ -1858,7 +1902,7 @@
   }
 
   function typeInFocused(text) {
-    const p = focusedPane();
+    const p = focusedTerm();
     if (!p?.ptyId) return false;
     native.pty.write(p.ptyId, text);
     p.term.focus();
@@ -1866,21 +1910,21 @@
   }
 
   function pasteToFocused(text) {
-    const p = focusedPane();
+    const p = focusedTerm();
     if (!p?.term) return false;
     insertText(p, text);
     return true;
   }
 
   function cdFocused(dir) {
-    const p = focusedPane();
+    const p = focusedTerm();
     if (!p?.ptyId) return createPane({ cwd: dir });
     writeLine(p, cdLine(shellKind(p), dir));
     p.term.focus();
   }
 
   function applyAliasToFocused(alias) {
-    const p = focusedPane();
+    const p = focusedTerm();
     if (!p?.ptyId) return;
     const kind = shellKind(p);
     const line = kind === 'cmd' ? `doskey ${alias.name}=${alias.command} $*`
@@ -1905,7 +1949,7 @@
   }
 
   function resolvePane(which) {
-    if (!which || which === 'focused') return focusedPane();
+    if (!which || which === 'focused') return focusedTerm();
     if (which === 'agent') return S.panes.get(S.agentPaneId) || null;
     return S.panes.get(which) || null;
   }
@@ -1949,7 +1993,7 @@
   }
 
   async function runCommand({ command, pane: where = 'agent', cwd, timeout_seconds: timeout = 120 }) {
-    const p = where === 'focused' ? focusedPane() : await agentPane();
+    const p = where === 'focused' ? focusedTerm() : await agentPane();
     if (!p?.ptyId) throw new Error('no terminal available');
     const kind = shellKind(p);
     const line = cwd && where !== 'focused' ? `${cdLine(kind, cwd)}${kind === 'powershell' ? '; ' : ' && '}${command}` : command;
@@ -1983,7 +2027,7 @@
       }
     }
     if (!S.panes.size) lines.push('- (none)');
-    const f = focusedPane();
+    const f = focusedTerm();
     if (f?.term) {
       try { lines.push('focused pane, last lines:', readTerminal('focused', 25)); } catch {}
     }
@@ -2136,10 +2180,10 @@
     refocus,
     paths: () => S.paths,
     cfg: () => S.cfg,
-    focusedPane: () => paneApi(focusedPane()),
+    focusedPane: () => paneApi(focusedTerm()),
     // The focused terminal as the Aliases panel needs it (its pty, to ask the main process).
     focusedTerminal: () => {
-      const p = focusedPane();
+      const p = focusedTerm();
       return p ? { id: p.id, ptyId: p.ptyId, cwd: p.cwd, profile: p.profile, ready: p.prompts > 0 } : null;
     },
     createPane: opts => createPane(opts),
@@ -2311,7 +2355,7 @@
       },
       statusbar: status,
       panes: {
-        focused: () => paneApi(focusedPane(), track),
+        focused: () => paneApi(focusedTerm(), track),
         all: () => [...S.panes.values()].map(p => paneApi(p, track)),
         create: async opts => paneApi(await createPane(opts), track)
       },
@@ -2461,15 +2505,15 @@
     native.onReminder(n => emit('reminder', n));
     // One-time hint so new users discover the sidebar.
     const hints = (await native.store.get('hints')) || {};
-    if (!hints.sidebar) {
-      setTimeout(() => toast('Tip: hover the left edge (or Ctrl+Shift+← from the leftmost pane) for notes, AI, folders…', 'tip'), 2500);
-      native.store.set('hints', { ...hints, sidebar: true });
-    }
+    // The very first launch opens on an empty workspace 1 (its buttons start a terminal).
+    const firstLaunch = !hints.launched && !payload.harness;
+    if (!hints.sidebar) setTimeout(() => toast('Tip: hover the left edge (or Ctrl+Shift+← from the leftmost pane) for notes, AI, folders…', 'tip'), 2500);
+    if (!hints.launched || !hints.sidebar) native.store.set('hints', { ...hints, launched: true, sidebar: true });
     await refreshUserFonts();
     applyConfig();
     setupBar();
     // Git also refreshes at every prompt and focus change; this only catches outside edits.
-    setInterval(() => { if (document.hasFocus()) refreshGit(focusedPane()); }, 15000);
+    setInterval(() => { if (document.hasFocus()) refreshGit(focusedTerm()); }, 15000);
     refreshKeyHints();
 
     try {
@@ -2538,7 +2582,7 @@
     if (S.cfg.behavior?.restoreSession !== false && payload.restore) {
       try { restored = await restoreSession(payload.restore); } catch (e) { console.error('session restore', e); }
     }
-    if (!restored) await createPane();
+    if (!restored && !firstLaunch) await createPane();
     S.restoring = false;
     saveSession();
     if (payload.error) toast(payload.error, 'error');

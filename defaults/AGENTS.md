@@ -21,7 +21,7 @@ Edit values in place and keep the comments. Main keys:
 
 | Key | Values |
 |---|---|
-| `theme` | a built-in id (`tokyo-night`, `catppuccin-mocha`, `rose-pine`, `kanagawa`, `gruvbox`, `everforest`, `nord`, `matte-black`, `dracula`, `one-dark`, `github-dark`, `night-owl`, `ayu-mirage`, `monokai-pro`, `solarized-dark`, `synthwave-84`, `poimandres`, `oxocarbon`, `osaka-jade`, `catppuccin-latte`, `rose-pine-dawn`, `flexoki-light`) or a file name from `themes/` |
+| `theme` | a built-in id (`tokyo-night`, `catppuccin-mocha`, `rose-pine`, `kanagawa`, `gruvbox`, `everforest`, `nord`, `matte-black`, `solar-autumn`, `dracula`, `one-dark`, `github-dark`, `night-owl`, `ayu-mirage`, `monokai-pro`, `solarized-dark`, `synthwave-84`, `poimandres`, `oxocarbon`, `osaka-jade`, `catppuccin-latte`, `rose-pine-dawn`, `flexoki-light`) or a file name from `themes/` |
 | `font` | `family` (bundled: JetBrains Mono, Fira Code, Cascadia Code, Geist Mono, IBM Plex Mono, Source Code Pro, Commit Mono, Iosevka, Monaspace Neon, Victor Mono, Martian Mono, Intel One Mono, Space Mono, or any installed font), `size`, `lineHeight`, `weight`, `weightBold` |
 | `cursor` | `style` bar/block/underline, `blink`, `width`, `inactive` outline/block/bar/underline/none, `color` theme/accent/accent2/#hex |
 | `window` | `gap`, `padding`, `radius`, `borderWidth`, `inactiveOpacity`, `animations`, `bar`, `clock`, `stats`, `paneOpacity` (0.3–1), `backgroundMaterial` none/acrylic/mica |

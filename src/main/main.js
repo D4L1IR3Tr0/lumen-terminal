@@ -165,7 +165,9 @@ async function initPayload(wcId = null) {
     osBuild: Number(os.release().split('.')[2]) || 0,
     version: app.getVersion(),
     // The session this window should reopen (or its own, after a reload).
-    restore: wcId == null ? null : takeRestore(wcId)
+    restore: wcId == null ? null : takeRestore(wcId),
+    // The dev screenshot harness always starts with a terminal, even on a fresh profile.
+    harness: !!process.env.LUMEN_SCREENSHOT && !process.env.LUMEN_TEST_FIRST_LAUNCH
   };
 }
 

@@ -58,6 +58,15 @@
       black: '#262626', red: '#d35f5f', green: '#a3b18a', yellow: '#f59e0b', blue: '#8a9db5', magenta: '#b294bb', cyan: '#8abeb7', white: '#bebebe',
       brightBlack: '#5c5c5c', brightRed: '#e57373', brightGreen: '#b5c99a', brightYellow: '#fbbf24', brightBlue: '#a3b8cc', brightMagenta: '#c5a3cf', brightCyan: '#a3d1ca', brightWhite: '#eaeaea'
     },
+    // Warm autumn take on Solarized, after Mistral's colors: off-white text on a brown-black
+    // background, a solar orange accent, washed-out yellow, red, olive and dusty blues.
+    'solar-autumn': {
+      name: 'Solar Autumn',
+      ui: { crust: '#13110f', surface: '#211d19', overlay: '#2d2721', border: '#3a3129', accent: '#f0762a', accent2: '#ddb766', muted: '#857869' },
+      background: '#1b1815', foreground: '#e9e0d0', cursor: '#f0762a', selectionBackground: '#3e3329',
+      black: '#29231e', red: '#c95f4e', green: '#9ba46a', yellow: '#ddb766', blue: '#7f9aae', magenta: '#b7788b', cyan: '#80a59a', white: '#d6cbb9',
+      brightBlack: '#5f5448', brightRed: '#e07a63', brightGreen: '#b4bd82', brightYellow: '#efcd7c', brightBlue: '#9ab2c4', brightMagenta: '#cd93a4', brightCyan: '#9dbdb2', brightWhite: '#f5eee2'
+    },
     'dracula': {
       name: 'Dracula',
       ui: { crust: '#1e1f29', surface: '#21222c', overlay: '#343746', border: '#343746', accent: '#bd93f9', accent2: '#ff79c6', muted: '#6272a4' },

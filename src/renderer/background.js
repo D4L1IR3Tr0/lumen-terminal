@@ -642,10 +642,32 @@
         px = new Uint32Array(img.data.buffer);
       },
       frame(_dt, t) {
-        const { base, a, b, light } = env.colors;
+        const { base, a, b, c: cyan, d: magenta, light } = env.colors;
         const k = env.opts.intensity;
-        const levels = [packed(base), packed(mix(base, a, 0.12 + 0.2 * k)), packed(mix(base, b, 0.25 + 0.35 * k))];
         const T = t * 0.6;
+        // Colors follow the theme's palette across the screen (accent → cyan → accent2 →
+        // magenta), drifting slowly: one pair of tones per column, computed once per frame.
+        const ramp = [a, cyan, b, magenta, a].map(rgb);
+        const bRGB = rgb(base);
+        const tone = (u, amount) => {
+          const f = ((u % 1) + 1) % 1 * (ramp.length - 1);
+          const i = Math.floor(f);
+          const m = f - i;
+          const c = ramp[i].map((v, j) => v + (ramp[i + 1][j] - v) * m);
+          const r = Math.round(bRGB[0] + (c[0] - bRGB[0]) * amount);
+          const g = Math.round(bRGB[1] + (c[1] - bRGB[1]) * amount);
+          const bl = Math.round(bRGB[2] + (c[2] - bRGB[2]) * amount);
+          return (255 << 24) | (bl << 16) | (g << 8) | r;
+        };
+        const lv0 = packed(base);
+        const lv1 = new Uint32Array(bw);
+        const lv2 = new Uint32Array(bw);
+        const drift = T * 0.03;
+        for (let x = 0; x < bw; x++) {
+          const u = (x / bw) * 0.75 + drift;
+          lv1[x] = tone(u, 0.12 + 0.2 * k);
+          lv2[x] = tone(u + 0.12, 0.25 + 0.35 * k);
+        }
         // Separable warped field: sin(X+Y) and cos(U+V) expand into per-row/per-column terms.
         const X = new Float32Array(bw);
         const V = new Float32Array(bw);
@@ -678,7 +700,8 @@
             v = v * v * 2;
             const lv = Math.min(1.999, v);
             const lo = lv | 0;
-            px[row + x] = levels[lo + (lv - lo > B[by + (x & 7)] ? 1 : 0)];
+            const up = lv - lo > B[by + (x & 7)];
+            px[row + x] = lo === 0 ? (up ? lv1[x] : lv0) : (up ? lv2[x] : lv1[x]);
           }
         }
         octx.putImageData(img, 0, 0);
@@ -726,12 +749,17 @@
   const BAYER8 = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
     3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21].map(v => (v + 0.5) / 64);
 
-  // Ordered dithering of the image in the theme's colors. Animated: a slow light wave crosses
-  // it and the threshold pattern drifts, so the picture shimmers like an old screen.
+  // Ordered (Bayer) dithering of the image, in one of two palettes (background.ditherColors):
+  //   "image": the picture keeps its own colors, each channel reduced to a few levels (8-bit look);
+  //   "theme": four tones of the theme, by brightness.
+  // "dim" pulls it towards the theme's background. Animated: a slow light wave crosses it and
+  // the threshold pattern drifts, so the picture shimmers like an old screen.
   function makeImageDither(ctx, env, animated) {
     const cell = env.preview ? 2 : 3;
+    const LEVELS = 4; // per channel: 64 colors, all taken from the picture's own range
     let W = 0, H = 0, bw = 0, bh = 0;
-    let lum = null;
+    let rgbData = null; // Float32Array of r, g, b in 0..1
+    let lum = null;     // Float32Array of brightness in 0..1
     let off = null, octx = null, img = null, px = null;
     let source = null;
     let alive = true;
@@ -744,10 +772,15 @@
     function sample() {
       if (!source || !bw) return;
       const { data } = sampleCover(source, W, H, bw, bh);
+      rgbData = new Float32Array(bw * bh * 3);
       lum = new Float32Array(bw * bh);
       for (let i = 0; i < bw * bh; i++) {
+        // Lifted shadows and a touch more contrast read better with few levels.
+        for (let c = 0; c < 3; c++) {
+          const v = data[i * 4 + c] / 255;
+          rgbData[i * 3 + c] = Math.min(1, Math.max(0, (Math.pow(v, 0.85) - 0.5) * 1.15 + 0.5));
+        }
         const l = (0.2126 * data[i * 4] + 0.7152 * data[i * 4 + 1] + 0.0722 * data[i * 4 + 2]) / 255;
-        // Lifted shadows and a little more contrast read better in 4 tones.
         lum[i] = Math.min(1, Math.max(0, (Math.pow(l, 0.75) - 0.5) * 1.25 + 0.5));
       }
     }
@@ -777,13 +810,17 @@
         sample();
       },
       frame(_dt, t) {
-        if (!lum) return;
-        const { base, a, b, fg } = env.colors;
+        if (!rgbData) return;
         const dim = Math.min(0.9, Math.max(0, env.opts.dim ?? 0.35));
-        // Four tones from the theme, darkened by the "dim" setting.
-        const top = mix(mix(fg, b, 0.25), base, dim * 0.45);
-        const levels = [packed(base), packed(mix(base, a, 0.55 - dim * 0.2)), packed(mix(mix(a, b, 0.45), base, dim * 0.3)), packed(top)];
-        const n = levels.length - 1;
+        // "dim" mixes the picture towards the theme's background before quantizing.
+        const [br, bg, bb] = rgb(env.colors.base).map(v => (v / 255) * dim * 0.75);
+        const keep = 1 - dim * 0.75;
+        const n = LEVELS - 1;
+        const scale = 255 / n;
+        // Theme palette: four tones from the background to a light accent, by brightness.
+        const themed = env.opts.ditherColors === 'theme';
+        const { base, a, b: accent2, fg } = env.colors;
+        const tones = themed ? [packed(base), packed(mix(base, a, 0.55 - dim * 0.2)), packed(mix(mix(a, accent2, 0.45), base, dim * 0.3)), packed(mix(mix(fg, accent2, 0.25), base, dim * 0.45))] : null;
         const T = t * 0.9;
         const shift = animated ? Math.floor(t * 3) : 0;
         const band = animated ? (t * 0.07) % 1.3 - 0.15 : -9;
@@ -801,11 +838,20 @@
           const sB = 0.07 * Math.sin(wy);
           const cB = 0.07 * Math.cos(wy);
           for (let x = 0; x < bw; x++) {
-            let v = lum[row + x];
-            if (animated) v += sA[x] * cB + cA[x] * sB + scan;
-            const lv = Math.min(n - 0.001, Math.max(0, v * n));
-            const lo = lv | 0;
-            px[row + x] = levels[lo + (lv - lo > BAYER8[by + ((x + shift) & 7)] ? 1 : 0)];
+            const i = (row + x) * 3;
+            const light = animated ? sA[x] * cB + cA[x] * sB + scan : 0;
+            const th = BAYER8[by + ((x + shift) & 7)];
+            if (themed) {
+              const lv = Math.min(2.999, Math.max(0, (lum[row + x] + light) * 3));
+              const lo = lv | 0;
+              px[row + x] = tones[lo + (lv - lo > th ? 1 : 0)];
+              continue;
+            }
+            // Ordered dithering per channel: floor(value × levels + threshold).
+            const r = Math.min(n, Math.max(0, Math.floor((rgbData[i] * keep + br + light) * n + th)));
+            const g = Math.min(n, Math.max(0, Math.floor((rgbData[i + 1] * keep + bg + light) * n + th)));
+            const b = Math.min(n, Math.max(0, Math.floor((rgbData[i + 2] * keep + bb + light) * n + th)));
+            px[row + x] = (255 << 24) | ((b * scale) << 16) | ((g * scale) << 8) | (r * scale);
           }
         }
         octx.putImageData(img, 0, 0);
