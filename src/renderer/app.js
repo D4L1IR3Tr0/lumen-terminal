@@ -315,7 +315,11 @@
     S.workspaces.forEach(ws => layout(ws));
     S.panes.forEach(applyFlow);
     fitAll();
+    // Folder view panes take the name of the chosen view (City, Constellation, Graph).
+    for (const p of S.panes.values()) if (p.viewMode === 'graph') p.profile.name = folderViewName();
     renderWorkspaces();
+    updateTitle();
+    emit('config:changed', S.cfg);
   }
 
   function buildBindings() {
@@ -512,8 +516,11 @@
 
   // attach: { ptyId, title, cwd } shows a process the main process already started (an agent's command).
   // Panes that show a view of the folder instead of a terminal (Ctrl+Shift+S).
+  // The map of the folder has three looks, picked in Settings (folders.view).
+  const FOLDER_VIEWS = { city: 'City', constellation: 'Constellation', graph: 'Graph' };
+  const folderViewName = () => FOLDER_VIEWS[S.cfg.folders?.view] || 'City';
   const VIEWS = {
-    graph: { name: 'Graph', detail: "follows the terminal's folder" },
+    graph: { get name() { return folderViewName(); }, detail: "map of the terminal's folder, follows it (look: Settings)" },
     files: { name: 'Files', detail: "file browser, follows the terminal's folder" }
   };
 

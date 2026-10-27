@@ -29,6 +29,7 @@ Edit values in place and keep the comments. Main keys:
 | `terminal` | `flow` top/bottom, `separators` (line between commands), `blocks` (hover actions on commands) |
 | `behavior` | `copyOnSelect`, `rightClickPaste`, `focusFollowsMouse`, `scrollback`, `inheritCwd`, `shellIntegration`, `git`, `restoreSession`, `notifyAfter` (seconds, 0 = off) |
 | `shells` | `default` ("auto" or a profile id), `profiles`: `[{ "id", "name", "command", "args": [] }]` |
+| `folders` | `view`: city/constellation/graph, the look of the folder map (Folders panel and map pane) |
 | `builtinPlugins` | `{ "notes": false }` turns a built-in plugin off (built-ins: `notes`, `clipboard`, `git`) |
 | `keybindings` | `{ "commandId": "Ctrl+Shift+X" }`, `""` disables. Modifiers: Ctrl, Shift, Alt, Meta |
 

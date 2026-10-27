@@ -61,6 +61,10 @@
     "intensity": 0.6              // animation intensity (0 to 1)
   },
 
+  "folders": {
+    "view": "city"                // map of a folder: "city" (3D blocks), "constellation" (3D orbits) or "graph" (2D)
+  },
+
   "behavior": {
     "copyOnSelect": false,
     "rightClickPaste": true,      // right click copies the selection, or pastes

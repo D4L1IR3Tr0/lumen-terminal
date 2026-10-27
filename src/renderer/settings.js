@@ -145,6 +145,12 @@
         ${toggle(['terminal', 'blocks'], 'Command blocks', 'Hover a command to copy it, copy its output or run it again')}`
     },
     {
+      title: 'Folder map',
+      html: () => `
+        ${segmented(['folders', 'view'], 'Look', [['city', 'City'], ['constellation', 'Constellation'], ['graph', 'Graph']])}
+        <div class="s-row"><span class="s-hint">Used by the Folders panel and the map pane (Ctrl+Shift+S). City: folders as platforms, files as blocks as tall as they are heavy. Constellation: folders orbiting in 3D. Graph: a flat 2D graph.</span></div>`
+    },
+    {
       title: 'Session & commands',
       html: () => `
         ${toggle(['behavior', 'restoreSession'], 'Restore the session', 'Reopen windows, panes, layouts and folders at startup')}

@@ -173,7 +173,7 @@
       'Plugins in plain JavaScript, hot reloaded. No build step, no restart.',
       'Your own Claude Code, Codex or Gemini, one shortcut away.',
       'Command blocks, session restore, and Git built in.',
-      'Your folder as a living graph, right next to your shell.'
+      'Your folder as a 3D city, right next to your shell.'
     ];
     if (reduced) { el.textContent = lines[0]; return; }
     for (let n = 0; ; n = (n + 1) % lines.length) {
@@ -448,55 +448,91 @@
     if (!reduced) setInterval(() => { if (visible && !document.hidden) draw((performance.now() - t0) / 1000); }, 50);
   }
 
-  // A small folder graph, like Lumen's Graph pane: the folder in the middle, its folders around,
-  // their files as dots, drifting slowly.
+  // A small folder "city", like Lumen's City view: folders are platforms joined by wires, files
+  // are blocks as tall as they are heavy. The camera orbits slowly.
   function artGraph() {
     const c = $('#art-graph');
     if (!c) return;
     const ctx = c.getContext('2d');
-    const dirs = [
-      { name: 'src', files: 7 }, { name: 'plugins', files: 4 }, { name: 'assets', files: 5 },
-      { name: 'docs', files: 3 }, { name: 'tests', files: 6 }
-    ].map((d, i, all) => ({ ...d, a: (i / all.length) * Math.PI * 2 + 0.4, seed: i * 1.7 }));
+    // Platforms: [x, z, width, depth, name, [file heights]]
+    const PADS = [
+      [0, 3, 3.4, 2.2, '~/lumen', [1.4, 0.9, 0.6, 0.5]],
+      [-6.5, -4, 3.4, 3.4, 'src', [2.6, 1.8, 1.2, 1, 0.8, 0.6, 0.5, 0.4]],
+      [-1.5, -4, 2.2, 2.2, 'docs', [0.7, 0.5]],
+      [3, -4, 2.2, 2.2, 'tests', [0.9, 0.6, 0.4]],
+      [7.5, -4, 2.2, 1.2, 'assets', [3.2, 1.6]]
+    ];
+    const wire = (x0, z0, x1, z1) => [[x0, z0], [x0, (z0 + z1) / 2], [x1, (z0 + z1) / 2], [x1, z1]];
+    const WIRES = PADS.slice(1).map(p => wire(0, 3 - 2.2, p[0], p[1]));
     animate(c, t => {
       const dpr = devicePixelRatio || 1;
       const W = c.clientWidth, H = c.clientHeight;
       if (c.width !== Math.round(W * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
-      const accent = cssVar('--accent'), muted = cssVar('--muted'), fg = cssVar('--fg');
-      const cx = W / 2, cy = H / 2, Rx = Math.min(W * 0.32, 190), Ry = H * 0.34;
-      const focus = Math.floor(t / 2.5) % dirs.length;
-      ctx.font = '10px "JetBrains Mono", ui-monospace, monospace';
-      ctx.textAlign = 'center';
-      for (const [i, d] of dirs.entries()) {
-        const a = d.a + Math.sin(t * 0.3 + d.seed) * 0.12;
-        const x = cx + Math.cos(a) * Rx, y = cy + Math.sin(a) * Ry;
-        const on = i === focus;
-        ctx.globalAlpha = on ? 0.9 : 0.35;
-        ctx.strokeStyle = on ? accent : muted;
-        ctx.lineWidth = on ? 1.2 : 0.8;
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
-        for (let k = 0; k < d.files; k++) {
-          const b = a + (k - (d.files - 1) / 2) * 0.42 + Math.sin(t * 0.5 + k + d.seed) * 0.05;
-          const r = 22 + (k % 2) * 8;
-          const fx = x + Math.cos(b) * r, fy = y + Math.sin(b) * r * 0.8;
-          ctx.globalAlpha = on ? 0.75 : 0.3;
-          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(fx, fy); ctx.stroke();
-          ctx.fillStyle = on ? accent : muted;
-          ctx.beginPath(); ctx.arc(fx, fy, 1.6, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = accent;
-        ctx.beginPath(); ctx.arc(x, y, on ? 3.5 : 2.6, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = on ? fg : muted;
-        ctx.fillText(d.name, x, y - 8);
+      const accent = cssVar('--accent'), accent2 = cssVar('--accent2'), border = cssVar('--border'), muted = cssVar('--muted');
+      const yaw = 0.5 + Math.sin(t * 0.18) * 0.55, pitch = 0.62, dist = 19;
+      const ex = dist * Math.cos(pitch) * Math.sin(yaw), ey = dist * Math.sin(pitch), ez = dist * Math.cos(pitch) * Math.cos(yaw) - 2;
+      const fl = Math.hypot(ex, ey, ez + 2);
+      const f = [-ex / fl, -ey / fl, (-2 - ez) / fl];
+      const rl = Math.hypot(f[2], f[0]);
+      const r = [-f[2] / rl, 0, f[0] / rl];
+      const u = [-r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1]];
+      const focal = Math.min(W * 1.05, H * 2);
+      const P = (x, y, z) => {
+        const dx = x - ex, dy = y - ey, dz = z - ez;
+        const cz = dx * f[0] + dy * f[1] + dz * f[2];
+        return [W / 2 + ((dx * r[0] + dz * r[2]) * focal) / cz, H * 0.5 - ((dx * u[0] + dy * u[1] + dz * u[2]) * focal) / cz];
+      };
+      const poly = (pts, color, fill, stroke) => {
+        ctx.beginPath();
+        pts.forEach((q, i) => { const [x, y] = P(...q); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.closePath();
+        ctx.globalAlpha = fill; ctx.fillStyle = color; ctx.fill();
+        ctx.globalAlpha = stroke; ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+      };
+      const cuboid = (x0, z0, x1, z1, y0, y1, color, fill) => {
+        if (ex < x0) poly([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], color, fill * 0.6, 0.7);
+        if (ex > x1) poly([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]], color, fill * 0.6, 0.7);
+        if (ez > z1) poly([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], color, fill * 0.8, 0.7);
+        poly([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], color, fill, 0.95);
+      };
+      // Ground grid and wires.
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = border;
+      ctx.globalAlpha = 0.5;
+      for (let i = -12; i <= 12; i += 2) {
+        ctx.beginPath(); ctx.moveTo(...P(i, 0, -10)); ctx.lineTo(...P(i, 0, 8)); ctx.stroke();
       }
-      ctx.fillStyle = accent;
-      ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = fg;
-      ctx.font = 'bold 11px "JetBrains Mono", ui-monospace, monospace';
-      ctx.fillText('~/projects/lumen', cx, cy + 18);
+      for (let k = -10; k <= 8; k += 2) {
+        ctx.beginPath(); ctx.moveTo(...P(-12, 0, k)); ctx.lineTo(...P(12, 0, k)); ctx.stroke();
+      }
+      ctx.strokeStyle = accent;
+      ctx.globalAlpha = 0.7;
+      for (const w of WIRES) {
+        ctx.beginPath();
+        w.forEach(([x, z], i) => (i ? ctx.lineTo(...P(x, 0.02, z)) : ctx.moveTo(...P(x, 0.02, z))));
+        ctx.stroke();
+      }
+      // Far to near.
+      const order = PADS.map((p, i) => ({ p, i, d: Math.hypot(p[0] - ex, p[1] - p[3] / 2 - ez) })).sort((a, b) => b.d - a.d);
+      ctx.font = '10px "JetBrains Mono", ui-monospace, monospace';
+      for (const { p, i } of order) {
+        const [x, z, w, d, name, files] = p;
+        cuboid(x - w / 2, z - d, x + w / 2, z, 0, 0.15, i === 0 ? accent2 : accent, 0.12);
+        const cols = Math.ceil(Math.sqrt(files.length));
+        files.forEach((h, k) => {
+          const fx = x - w / 2 + 0.35 + (k % cols) * 0.8, fz = z - 0.35 - Math.floor(k / cols) * 0.8;
+          const grow = Math.min(1, Math.max(0, (t - k * 0.08 - i * 0.15) / 0.6));
+          cuboid(fx, fz - 0.6, fx + 0.6, fz, 0.15, 0.15 + h * (1 - Math.pow(1 - grow, 3)), i === 0 ? accent2 : accent, 0.22);
+        });
+        const [lx, ly] = P(x - w / 2, 0, z + 0.4);
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = i === 0 ? cssVar('--fg') : muted;
+        ctx.textAlign = 'left';
+        ctx.fillText(name + (i ? '/' : ''), lx, ly + 10);
+      }
+      ctx.globalAlpha = 1;
     });
   }
 

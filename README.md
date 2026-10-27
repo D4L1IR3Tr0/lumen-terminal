@@ -76,13 +76,23 @@ Every change applies instantly and is saved to `config.jsonc` without touching y
 
 | Panel | Shortcut | What it does |
 |---|---|---|
-| Folders | `Ctrl+Shift+O` | Favorites + recent folders; click = `cd` in the active terminal |
+| Folders | `Ctrl+Shift+O` | Follows the focused terminal: favorites, recent folders, a tree with a filter, and a map of the folder (double click = `cd`) |
 | Notes | `Ctrl+Shift+M` | Pinnable notes, reminders (built-in plugin) |
 | Clipboard | `Ctrl+Shift+H` | History (memory only) + pinned items; click = paste (built-in plugin) |
 | Git | `Ctrl+Shift+G` | Follows the focused terminal's repository: changes, diffs, stage, commit, fetch/pull/push, history, branches, stashes; GitHub account (via `gh auth login` or a token): repos, clone, PRs, review requests, issues, activity, contributions, PR and CI status of the branch (built-in plugin) |
 | AI assistant | `Ctrl+Shift+A` | Lumen's own chat (Anthropic API key) or your own agent (Claude Code, Codex, Gemini CLI, Mistral Vibe) right in the panel |
 | Aliases | `Ctrl+Shift+L` | The aliases of the focused terminal, read from it live (session ones included) + Lumen aliases shared by PowerShell, Git Bash, WSL and cmd |
-| Plugins | palette | Built-in plugins on/off; enable, read, delete, install (file / URL), create with AI |
+| Plugins | palette | Built-in plugins on/off; enable, read, delete, install (file / URL / catalog), create with AI |
+
+### Folder map
+
+The map of a folder has three looks, picked in Settings → Folder map (`folders.view`):
+
+- **City** (default): after SGI's FSN. Folders are platforms laid out as a tree, files stand on them as blocks as tall as they are heavy, so the big files show at a glance.
+- **Constellation**: folders orbit their parent in 3D as wireframe spheres, files float around them.
+- **Graph**: a flat, Obsidian-like force graph.
+
+It lives in the Folders panel, and `Ctrl+Shift+S` opens it (or a Files browser) as a pane next to your shells. Both follow the terminal's folder. Drag to orbit, Shift+drag to pan, wheel to zoom, click to open a folder, double click to `cd`.
 
 ### AI: bring your own account
 

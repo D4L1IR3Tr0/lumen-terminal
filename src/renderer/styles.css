@@ -1744,6 +1744,11 @@ body.mac .win-controls { display: none; }
 .fx-graph-head .p-link { letter-spacing: 0; text-transform: none; font-weight: 400; }
 .fx-graph { position: relative; flex: none; height: 260px; border: 1px solid var(--border); border-radius: 10px; background: color-mix(in srgb, var(--crust) 60%, transparent); overflow: hidden; }
 .fx-graph canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+/* City: the 3D view draws on a dark screen with faint scanlines, like a vector display. */
+.fx-graph.fx-city { height: 300px; background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 7%, var(--crust)), var(--crust) 70%); }
+.fx-graph.fx-city::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, color-mix(in srgb, #000 22%, transparent) 0 1px, transparent 1px 3px); opacity: .5; }
+.fx-graph.fx-city canvas:active { cursor: grabbing; }
+
 /* The same browser as a pane (Ctrl+Shift+S → Graph / Files). */
 .pane-view { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 10px 12px 12px; outline: none; font-size: 12px; }
 .fx-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -1752,6 +1757,8 @@ body.mac .win-controls { display: none; }
 .fx-actions .fx-fit { margin-left: 6px; }
 .fx-mode-graph .fx-graph { flex: 1; height: auto; min-height: 0; border-radius: 8px; }
 .fx-mode-files .fx-tree { min-height: 0; }
+/* The zoom badge goes to the bottom of view panes, where it does not cover their bar. */
+.pane-view ~ .pane-badge { top: auto; bottom: 8px; }
 .fx-graph-tip { position: absolute; z-index: 2; max-width: 70%; padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--crust); color: var(--fg); font: 11px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
 /* ─── Dither colors: two tiles previewing the real effect ───────────── */

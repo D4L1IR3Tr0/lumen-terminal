@@ -432,11 +432,16 @@ ipcMain.handle('fs:list', (_e, dir) => {
   }
   const full = path.resolve(String(dir));
   const entries = [];
-  for (const d of fs.readdirSync(full, { withFileTypes: true })) {
+  const list = fs.readdirSync(full, { withFileTypes: true });
+  // File sizes feed the City view (block heights); skipped for huge folders to stay fast.
+  const sized = list.length <= 3000;
+  for (const d of list) {
     if (d.name.startsWith('$') || d.name === 'System Volume Information') continue;
     let isDir = d.isDirectory();
     if (d.isSymbolicLink()) { try { isDir = fs.statSync(path.join(full, d.name)).isDirectory(); } catch { continue; } }
-    entries.push({ name: d.name, dir: isDir, hidden: d.name.startsWith('.') });
+    let size;
+    if (!isDir && sized) { try { size = fs.statSync(path.join(full, d.name)).size; } catch {} }
+    entries.push({ name: d.name, dir: isDir, hidden: d.name.startsWith('.'), size });
   }
   entries.sort((a, b) => (b.dir - a.dir) || a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   const parent = path.dirname(full);
