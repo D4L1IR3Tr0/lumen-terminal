@@ -598,8 +598,8 @@
       { os: 'win', label: 'Windows 10 / 11', a: find(/\.exe$/i) },
       { os: 'mac', label: 'macOS · Apple silicon', a: find(/arm64\.dmg$/i) },
       { os: 'mac', label: 'macOS · Intel', a: find(/x64\.dmg$/i) },
-      { os: 'linux', label: 'Linux · AppImage', a: find(/\.AppImage$/i) },
-      { os: 'linux', label: 'Linux · .deb', a: find(/\.deb$/i) }
+      { os: 'linux', label: 'Linux · AppImage', a: find(/(x86_64|x64)\.AppImage$/i) },
+      { os: 'linux', label: 'Linux · .deb', a: find(/amd64\.deb$/i) }
     ].filter(f => f.a);
     const mb = n => `${Math.round(n / 1048576)} MB`;
     $$('[data-release-version]').forEach(el => { el.textContent = rel.tag; });
