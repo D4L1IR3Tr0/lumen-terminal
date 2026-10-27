@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "crt",
+      "name": "CRT",
+      "description": "A phosphor green theme with scanlines and a soft glow over the terminals. Turn it off by disabling the plugin.",
+      "version": "1.0.0",
+      "author": "Lumen",
+      "category": "themes",
+      "permissions": [],
+      "url": "https://raw.githubusercontent.com/D4L1IR3Tr0/lumen-terminal/main/registry/plugins/crt.js",
+      "sha256": "285aed6ecdc5433500bf7d37d6a642954c371d55c1c5a44726dcc4f8112f75ac",
+      "size": 1621
+    },
+    {
+      "id": "pomodoro",
+      "name": "Pomodoro",
+      "description": "A 25/5 focus timer in the top bar. Click it to start or pause; a toast tells you when to take a break.",
+      "version": "1.0.0",
+      "author": "Lumen",
+      "category": "productivity",
+      "permissions": [],
+      "url": "https://raw.githubusercontent.com/D4L1IR3Tr0/lumen-terminal/main/registry/plugins/pomodoro.js",
+      "sha256": "2cd01fe77c6b9e345939af96b7ab9dfa668b352281deaaafc5d94159293cab6a",
+      "size": 1661
+    },
+    {
+      "id": "todo",
+      "name": "Todo",
+      "description": "A small todo list per project, in the sidebar. It follows the focused terminal: each folder has its own list, which follows you into its subfolders.",
+      "version": "1.0.0",
+      "author": "Lumen",
+      "category": "productivity",
+      "permissions": [],
+      "url": "https://raw.githubusercontent.com/D4L1IR3Tr0/lumen-terminal/main/registry/plugins/todo.js",
+      "sha256": "911d551bd9a9e3a128309a6024b8f10f71ce8a9243fa14f119206b362e4b6a45",
+      "size": 3423
+    },
+    {
+      "id": "weather",
+      "name": "Weather",
+      "description": "The current temperature in the top bar, from wttr.in (your location is guessed from your IP). Click it for the full forecast.",
+      "version": "1.0.0",
+      "author": "Lumen",
+      "category": "bar",
+      "permissions": [],
+      "url": "https://raw.githubusercontent.com/D4L1IR3Tr0/lumen-terminal/main/registry/plugins/weather.js",
+      "sha256": "613186aece3eb705f36516d982c4ab07723ab734c1f365bff8dba0918a30c1fd",
+      "size": 1083
+    }
+  ]
+}

@@ -27,13 +27,16 @@ window.LumenPanels.push({
         <div class="plugin-code-head"><span></span><button class="p-link" data-act="close-code">Close</button></div>
         <pre></pre>
       </div>
-      <div class="plugin-market">
-        <div class="plugin-market-title">${host.icon('sparkle')} Community catalog</div>
-        <p>Coming soon: browse and install community plugins in one click.</p>
-      </div>`;
+      <div class="p-section-title catalog-title">Catalog <button class="p-link" data-act="catalog-refresh">Refresh</button></div>
+      <div class="p-list plugin-list" data-kind="catalog"><p class="p-empty">Loading the catalog…</p></div>
+      <p class="catalog-hint">Reviewed plugins from Lumen's repository. They arrive disabled: read them, then switch them on. Publishing and ratings arrive soon, with a free account.</p>`;
 
     const builtinEl = el.querySelector('[data-kind="builtin"]');
     const userEl = el.querySelector('[data-kind="user"]');
+    const catalogEl = el.querySelector('[data-kind="catalog"]');
+    let catalog = null;       // null: not loaded yet; [] when empty
+    let catalogError = '';
+    let spotlight = null;     // id highlighted by a lumen://install link
     const urlForm = el.querySelector('.plugin-url');
 
     const card = p => `
@@ -54,7 +57,52 @@ window.LumenPanels.push({
           </div>
         </div>`;
 
+    const newer = (a, b) => {
+      const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+      for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+      return false;
+    };
+
+    const entry = c => {
+      const mine = list.find(p => !p.builtin && p.id === c.id);
+      const state = !mine ? `<button class="s-btn" data-act="cat-install">Install</button>`
+        : newer(c.version, mine.version) ? `<button class="s-btn" data-act="cat-install">Update to v${host.escape(c.version)}</button>`
+        : '<span class="catalog-state">installed</span>';
+      return `
+        <div class="plugin-card catalog-card${spotlight === c.id ? ' spot' : ''}" data-cat-id="${host.escape(c.id)}">
+          <div class="plugin-head">
+            <span class="plugin-name">${host.escape(c.name)}</span>
+            <span class="p-badge">v${host.escape(c.version)}</span>
+            <span class="catalog-cat">${host.escape(c.category)}</span>
+          </div>
+          <div class="plugin-desc">${host.escape(c.description)}</div>
+          ${c.permissions?.length ? `<div class="plugin-perms">${c.permissions.map(x => `<span class="p-badge" title="This plugin can use: ${host.escape(x)}">${host.icon('key')}${host.escape(x)}</span>`).join('')}</div>` : ''}
+          <div class="plugin-meta">
+            <span>by ${host.escape(c.author)} · ${(c.size / 1024).toFixed(1)} KB · <button class="p-link" data-act="cat-code">read the code</button></span>
+            ${state}
+          </div>
+        </div>`;
+    };
+
+    function paintCatalog() {
+      if (catalog === null) { catalogEl.innerHTML = `<p class="p-empty">${catalogError ? host.escape(catalogError) : 'Loading the catalog…'}</p>`; return; }
+      catalogEl.innerHTML = catalog.map(entry).join('') || '<p class="p-empty">The catalog is empty.</p>';
+      if (spotlight) catalogEl.querySelector('.spot')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+
+    async function loadCatalog(fresh = false) {
+      try {
+        catalog = await host.native.plugins.registry(fresh);
+        catalogError = '';
+      } catch (err) {
+        catalog = null;
+        catalogError = `Catalog unavailable: ${err.message}`;
+      }
+      paintCatalog();
+    }
+
     function paint() {
+      paintCatalog();
       builtinEl.innerHTML = list.filter(p => p.builtin).map(card).join('') || '<p class="p-empty">None.</p>';
       userEl.innerHTML = list.filter(p => !p.builtin).map(card).join('') || '<p class="p-empty">No plugins installed.</p>';
     }
@@ -89,6 +137,29 @@ window.LumenPanels.push({
           if (file) { await host.native.plugins.installPath(file); host.toast('Plugin installed (disabled: review it, then enable it)'); load(); }
         }
         else if (act === 'url-toggle') { urlForm.classList.toggle('hidden'); urlForm.querySelector('input').focus(); }
+        else if (act === 'catalog-refresh') loadCatalog(true);
+        else if (act === 'cat-install' || act === 'cat-code') {
+          const id = e.target.closest('[data-cat-id]').dataset.catId;
+          const c = catalog?.find(x => x.id === id);
+          if (!c) return;
+          if (act === 'cat-code') {
+            const box = el.querySelector('.plugin-code');
+            box.querySelector('span').textContent = `${c.id}.js (catalog)`;
+            box.querySelector('pre').textContent = 'Loading…';
+            box.classList.remove('hidden');
+            box.scrollIntoView({ block: 'nearest' });
+            const res = await fetch(c.url, { cache: 'no-store' });
+            box.querySelector('pre').textContent = res.ok ? await res.text() : `Could not load the code (HTTP ${res.status})`;
+            return;
+          }
+          const btn = e.target.closest('button');
+          btn.disabled = true;
+          btn.textContent = 'Installing…';
+          const file = await host.native.plugins.installRegistry(id);
+          host.toast(`${c.name} installed: ${file} (disabled, read it then switch it on above)`);
+          spotlight = null;
+          await load();
+        }
         else if (act === 'ai') host.askAi('Create a Lumen plugin that ', { send: false });
         else if (act === 'close-code') el.querySelector('.plugin-code').classList.add('hidden');
         else if (act === 'code' && card) {
@@ -105,6 +176,7 @@ window.LumenPanels.push({
         }
       } catch (err) {
         host.toast(err.message, 'error');
+        paintCatalog();
       }
     });
 
@@ -124,7 +196,13 @@ window.LumenPanels.push({
 
     actions.addEventListener('click', e => { if (e.target.closest('[data-act="folder"]')) host.native.open.path('plugins'); });
     host.on('plugins:changed', load);
-    this.onOpen = load;
+    // arg: { install: id } when opened by a lumen://install/<id> link.
+    this.onOpen = arg => {
+      if (arg?.install) spotlight = String(arg.install);
+      load();
+      loadCatalog(!!arg?.install);
+    };
     load();
+    loadCatalog();
   }
 });

@@ -16,6 +16,7 @@ const ai = require('./ai');
 const agents = require('./agents');
 const acp = require('./acp');
 const sessions = require('./session');
+const updates = require('./updates');
 const builtinThemes = require('../shared/themes');
 
 const ICON = path.join(__dirname, '..', '..', 'assets', 'icon.png');
@@ -469,6 +470,10 @@ ipcMain.handle('plugins:toggle', (_e, file) => plugins.toggle(String(file)));
 ipcMain.handle('plugins:remove', (_e, file) => plugins.remove(String(file)));
 ipcMain.handle('plugins:install', (_e, name, code, enabled) => plugins.install(String(name), String(code), { enabled: !!enabled }));
 ipcMain.handle('plugins:installUrl', (_e, url) => plugins.installFromUrl(String(url)));
+ipcMain.handle('update:ready', () => updates.ready());
+ipcMain.on('update:install', () => updates.install());
+ipcMain.handle('plugins:registry', (_e, fresh) => plugins.registry({ fresh: !!fresh }));
+ipcMain.handle('plugins:installRegistry', (_e, id) => plugins.installFromRegistry(String(id)));
 ipcMain.handle('plugins:installPath', (_e, file) => {
   if (typeof file !== 'string' || !file.toLowerCase().endsWith('.js')) throw new Error('pick a .js file');
   return plugins.installFromFile(file);
@@ -589,10 +594,40 @@ const isolated = !!process.env.LUMEN_SCREENSHOT;
 if (isolated) app.setPath('userData', path.join(app.getPath('temp'), `lumen-dev-${process.pid}`));
 const primary = isolated || app.requestSingleInstanceLock();
 
+// lumen://install/<plugin-id> (the website's Install buttons) opens the plugin's card in the
+// Plugins panel, where the user reads it and installs it. Nothing is installed by the link itself.
+const DEEP_LINK = /^lumen:\/\/install\/([\w.-]{1,60})\/?$/i;
+const linkIn = argv => argv.find(a => DEEP_LINK.test(String(a)));
+let pendingLink = linkIn(process.argv);
+
+function openDeepLink(url) {
+  const m = String(url || '').match(DEEP_LINK);
+  if (!m) return;
+  const w = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+  if (!w) { pendingLink = url; return; }
+  if (w.isMinimized()) w.restore();
+  w.show();
+  w.focus();
+  w.webContents.send('panel:open', 'plugins', { install: m[1] });
+}
+
+// Only the installed app claims lumen:// (a dev checkout never takes over the user's links).
+if (!isolated && app.isPackaged) app.setAsDefaultProtocolClient('lumen');
+
 if (!primary) {
   app.quit();
 } else {
-  app.on('second-instance', () => createWindow());
+  app.on('second-instance', (_e, argv) => {
+    const link = linkIn(argv);
+    if (link) openDeepLink(link);
+    else createWindow();
+  });
+  // macOS delivers links through open-url, possibly before the app is ready.
+  app.on('open-url', (e, url) => {
+    e.preventDefault();
+    if (app.isReady()) openDeepLink(url);
+    else pendingLink = url;
+  });
   app.whenReady().then(() => {
     // The page may only list installed fonts (for the font picker); everything else is denied.
     session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
@@ -620,12 +655,18 @@ if (!primary) {
     if (!isolated) ensureShortcut();
     setTimeout(() => shells.profiles(config.load().config).then(aliases.warm, () => {}), 3000);
     clipboardWatch.start(history => broadcast('clipboard:changed', history));
+    updates.start(broadcast);
     setInterval(checkReminders, 30000);
     checkReminders();
     const { config: startCfg } = config.load();
     const previous = startCfg.behavior?.restoreSession === false ? [] : sessions.load();
     if (previous.length) previous.forEach(snap => createWindow(snap));
     else createWindow();
+    if (pendingLink) {
+      const link = pendingLink;
+      pendingLink = null;
+      BrowserWindow.getAllWindows()[0]?.webContents.once('did-finish-load', () => setTimeout(() => openDeepLink(link), 1500));
+    }
   });
 }
 

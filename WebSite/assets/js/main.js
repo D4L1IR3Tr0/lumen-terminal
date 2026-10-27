@@ -172,7 +172,8 @@
       'Hyprland-style tiling, live themes and an ASCII koi pond under your shell.',
       'Plugins in plain JavaScript, hot reloaded. No build step, no restart.',
       'Your own Claude Code, Codex or Gemini, one shortcut away.',
-      'Command blocks, session restore, and Git built in.'
+      'Command blocks, session restore, and Git built in.',
+      'Your folder as a living graph, right next to your shell.'
     ];
     if (reduced) { el.textContent = lines[0]; return; }
     for (let n = 0; ; n = (n + 1) % lines.length) {
@@ -435,6 +436,105 @@
     if (!reduced) setInterval(draw, 1800);
   }
 
+  const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const rgbOf = hex => { const n = parseInt(hex.replace('#', ''), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+
+  // Runs draw(t) about 20 times a second while the canvas is on screen.
+  function animate(canvas, draw) {
+    let visible = false;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(canvas);
+    const t0 = performance.now();
+    draw(0);
+    if (!reduced) setInterval(() => { if (visible && !document.hidden) draw((performance.now() - t0) / 1000); }, 50);
+  }
+
+  // A small folder graph, like Lumen's Graph pane: the folder in the middle, its folders around,
+  // their files as dots, drifting slowly.
+  function artGraph() {
+    const c = $('#art-graph');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const dirs = [
+      { name: 'src', files: 7 }, { name: 'plugins', files: 4 }, { name: 'assets', files: 5 },
+      { name: 'docs', files: 3 }, { name: 'tests', files: 6 }
+    ].map((d, i, all) => ({ ...d, a: (i / all.length) * Math.PI * 2 + 0.4, seed: i * 1.7 }));
+    animate(c, t => {
+      const dpr = devicePixelRatio || 1;
+      const W = c.clientWidth, H = c.clientHeight;
+      if (c.width !== Math.round(W * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const accent = cssVar('--accent'), muted = cssVar('--muted'), fg = cssVar('--fg');
+      const cx = W / 2, cy = H / 2, Rx = Math.min(W * 0.32, 190), Ry = H * 0.34;
+      const focus = Math.floor(t / 2.5) % dirs.length;
+      ctx.font = '10px "JetBrains Mono", ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      for (const [i, d] of dirs.entries()) {
+        const a = d.a + Math.sin(t * 0.3 + d.seed) * 0.12;
+        const x = cx + Math.cos(a) * Rx, y = cy + Math.sin(a) * Ry;
+        const on = i === focus;
+        ctx.globalAlpha = on ? 0.9 : 0.35;
+        ctx.strokeStyle = on ? accent : muted;
+        ctx.lineWidth = on ? 1.2 : 0.8;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+        for (let k = 0; k < d.files; k++) {
+          const b = a + (k - (d.files - 1) / 2) * 0.42 + Math.sin(t * 0.5 + k + d.seed) * 0.05;
+          const r = 22 + (k % 2) * 8;
+          const fx = x + Math.cos(b) * r, fy = y + Math.sin(b) * r * 0.8;
+          ctx.globalAlpha = on ? 0.75 : 0.3;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(fx, fy); ctx.stroke();
+          ctx.fillStyle = on ? accent : muted;
+          ctx.beginPath(); ctx.arc(fx, fy, 1.6, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = accent;
+        ctx.beginPath(); ctx.arc(x, y, on ? 3.5 : 2.6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = on ? fg : muted;
+        ctx.fillText(d.name, x, y - 8);
+      }
+      ctx.fillStyle = accent;
+      ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = fg;
+      ctx.font = 'bold 11px "JetBrains Mono", ui-monospace, monospace';
+      ctx.fillText('~/projects/lumen', cx, cy + 18);
+    });
+  }
+
+  // A sunset, dithered with a 4×4 Bayer matrix in four tones of the page's theme, like an image
+  // background with ditherColors "theme".
+  function artDither() {
+    const c = $('#art-dither');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    animate(c, t => {
+      const W = Math.max(40, Math.round(c.clientWidth / 3)), H = Math.max(20, Math.round(c.clientHeight / 3));
+      if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+      const tones = ['--crust', '--overlay', '--accent2', '--accent'].map(v => rgbOf(cssVar(v)));
+      const img = ctx.createImageData(W, H);
+      const sunX = W * 0.62, sunY = H * (0.52 + Math.sin(t * 0.25) * 0.05), sunR = H * 0.24;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const horizon = H * 0.66;
+          let v;
+          if (y < horizon) {
+            const d = Math.hypot(x - sunX, (y - sunY) * 1.1);
+            v = 0.18 + (y / horizon) * 0.35 + Math.max(0, 1 - d / (sunR * 2.6)) * 0.45 + (d < sunR ? 0.5 : 0);
+          } else {
+            const ripple = Math.sin(x * 0.35 + t * 2 + y * 0.9) * 0.5 + 0.5;
+            const glow = Math.max(0, 1 - Math.abs(x - sunX) / (sunR * 1.6));
+            v = 0.12 + glow * ripple * 0.6 * ((y - horizon) / (H - horizon) * 0.4 + 0.6);
+          }
+          const level = Math.min(3, Math.max(0, Math.floor(v * 3 + BAYER[(y & 3) * 4 + (x & 3)] / 16)));
+          const [r, g, b] = tones[level];
+          const i = (y * W + x) * 4;
+          img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    });
+  }
+
   async function paletteDemo() {
     const el = $('#palette-demo');
     if (!el) return;
@@ -453,6 +553,67 @@
       for (let i = 0; i <= q.length; i++) { paint(q.slice(0, i), i ? r : []); await sleep(110); }
       await sleep(2000);
     }
+  }
+
+  // ─── Downloads: the latest GitHub release, for the visitor's OS ──────
+
+  const REPO = 'D4L1IR3Tr0/lumen-terminal';
+
+  async function latestRelease() {
+    const KEY = 'lumen-site-release';
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+      if (cached && Date.now() - cached.at < 10 * 60 * 1000) return cached.data;
+    } catch {}
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!res.ok) throw new Error(res.status === 404 ? 'none' : `HTTP ${res.status}`);
+    const r = await res.json();
+    const data = { tag: r.tag_name, url: r.html_url, assets: r.assets.map(a => ({ name: a.name, url: a.browser_download_url, size: a.size })) };
+    try { sessionStorage.setItem(KEY, JSON.stringify({ at: Date.now(), data })); } catch {}
+    return data;
+  }
+
+  async function setupDownloads() {
+    const main = $('#dl-main');
+    if (!main && !$$('[data-dl-label]').length) return;
+    const ua = `${navigator.userAgentData?.platform || ''} ${navigator.platform || ''} ${navigator.userAgent}`;
+    const os = /mac|iphone|ipad/i.test(ua) ? 'mac' : /linux|x11|cros/i.test(ua) && !/android/i.test(ua) ? 'linux' : 'win';
+    const OS_NAME = { win: 'Windows', mac: 'macOS', linux: 'Linux' };
+    $$('[data-dl-label]').forEach(el => { el.textContent = `Download for ${OS_NAME[os]}`; });
+    const NOTES = {
+      win: 'Lumen is not code-signed yet: if SmartScreen stops the installer, click <b>More info</b> → <b>Run anyway</b>.',
+      mac: 'Lumen is not notarized yet: after moving it to Applications, run <code>xattr -cr /Applications/Lumen.app</code> once.',
+      linux: 'AppImage: <code>chmod +x Lumen-*.AppImage</code>, then run it. The .deb installs with <code>sudo apt install ./Lumen-*.deb</code>.'
+    };
+    const note = $('#dl-note');
+    let rel;
+    try {
+      rel = await latestRelease();
+    } catch (e) {
+      if (note && e.message === 'none') note.textContent = 'The first public release is on its way: watch the repository to know when it lands.';
+      return;
+    }
+    const find = re => rel.assets.find(a => re.test(a.name));
+    const files = [
+      { os: 'win', label: 'Windows 10 / 11', a: find(/\.exe$/i) },
+      { os: 'mac', label: 'macOS · Apple silicon', a: find(/arm64\.dmg$/i) },
+      { os: 'mac', label: 'macOS · Intel', a: find(/x64\.dmg$/i) },
+      { os: 'linux', label: 'Linux · AppImage', a: find(/\.AppImage$/i) },
+      { os: 'linux', label: 'Linux · .deb', a: find(/\.deb$/i) }
+    ].filter(f => f.a);
+    const mb = n => `${Math.round(n / 1048576)} MB`;
+    $$('[data-release-version]').forEach(el => { el.textContent = rel.tag; });
+    const mine = files.find(f => f.os === os);
+    if (main && mine) {
+      main.href = mine.a.url;
+      main.removeAttribute('target');
+      $('#dl-file').textContent = `${mine.a.name} · ${mb(mine.a.size)}`;
+    }
+    const all = $('#dl-all');
+    if (all && files.length) {
+      all.innerHTML = files.map(f => `<a href="${f.a.url}" class="${f.os === os ? 'ok' : ''}">${f.label}<small>${mb(f.a.size)}</small></a>`).join('');
+    }
+    if (note) note.innerHTML = NOTES[os];
   }
 
   // ─── Dividers and the footer wave ────────────────────────────────────
@@ -511,6 +672,9 @@
   artBlocks();
   artGit();
   artConfig();
+  artGraph();
+  artDither();
+  setupDownloads();
   paletteDemo();
   asciiLines();
 })();

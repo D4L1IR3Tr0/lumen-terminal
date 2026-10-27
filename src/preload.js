@@ -17,6 +17,11 @@ contextBridge.exposeInMainWorld('native', {
     onData: listen('pty:data'),
     onExit: listen('pty:exit')
   },
+  update: {
+    ready: () => ipcRenderer.invoke('update:ready'),
+    install: () => ipcRenderer.send('update:install'),
+    onReady: listen('update:ready')
+  },
   win: {
     minimize: () => ipcRenderer.send('win:minimize'),
     toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),
@@ -105,6 +110,8 @@ contextBridge.exposeInMainWorld('native', {
     remove: file => ipcRenderer.invoke('plugins:remove', file),
     install: (name, code, enabled) => ipcRenderer.invoke('plugins:install', name, code, enabled),
     installUrl: url => ipcRenderer.invoke('plugins:installUrl', url),
+    registry: fresh => ipcRenderer.invoke('plugins:registry', fresh),
+    installRegistry: id => ipcRenderer.invoke('plugins:installRegistry', id),
     installPath: file => ipcRenderer.invoke('plugins:installPath', file)
   },
   agents: {

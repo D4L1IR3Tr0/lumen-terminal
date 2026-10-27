@@ -2348,9 +2348,12 @@
       themes: {
         register(id, theme) {
           S.pluginThemes[id] = theme;
-          track(() => delete S.pluginThemes[id]);
+          track(() => { delete S.pluginThemes[id]; if (S.themeId === id) applyTheme(); });
+          // The config may already name this theme (chosen earlier): show it as soon as it exists.
+          if (S.themeId === id) applyTheme();
         },
-        apply(id) { S.themeId = id; applyTheme(); },
+        // Like picking it in the theme picker: saved in config.jsonc.
+        apply(id) { selectTheme(id); },
         get current() { return S.themeId; }
       },
       statusbar: status,
@@ -2570,6 +2573,15 @@
     document.addEventListener('dragover', e => e.preventDefault());
     document.addEventListener('drop', e => e.preventDefault());
     native.acp.onTerminal(showAgentCommand);
+    // A new version downloaded in the background: a quiet item in the bar, installed on click.
+    const showUpdate = version => {
+      if (!version) return;
+      S.statusItems.set('lumen.update', { id: 'lumen.update', text: `update ${version} · restart`, title: `Lumen ${version} is ready: click to restart and install it`, onClick: () => native.update.install() });
+      renderStatusItems();
+      command('update.install', `Restart to install Lumen ${version}`, () => native.update.install(), { keywords: 'update upgrade' });
+    };
+    native.update.onReady(showUpdate);
+    native.update.ready().then(showUpdate);
     native.onNotifyClick(id => {
       const p = S.panes.get(id);
       if (!p) return;

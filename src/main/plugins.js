@@ -98,4 +98,31 @@ async function installFromUrl(url) {
   return install(name, code);
 }
 
-module.exports = { list, read, readBuiltin, toggle, remove, install, installFromFile, installFromUrl };
+// ─── Community registry ─────────────────────────────────────────────
+// registry/plugins.json in Lumen's repository lists reviewed plugins with the sha256 of each file.
+const REGISTRY = 'https://raw.githubusercontent.com/D4L1IR3Tr0/lumen-terminal/main/registry/';
+let cache = null;
+
+async function registry({ fresh = false } = {}) {
+  if (!fresh && cache && Date.now() - cache.at < 10 * 60 * 1000) return cache.plugins;
+  const res = await fetch(REGISTRY + 'plugins.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`the catalog is unreachable (HTTP ${res.status})`);
+  const data = await res.json();
+  const plugins = (data.plugins || []).filter(p => /^[\w.-]+$/.test(p.id) && String(p.url).startsWith(REGISTRY));
+  cache = { at: Date.now(), plugins };
+  return plugins;
+}
+
+// Downloads a catalog plugin and checks it is exactly the reviewed file before saving it (disabled).
+async function installFromRegistry(id) {
+  const entry = (await registry()).find(p => p.id === id) || (await registry({ fresh: true })).find(p => p.id === id);
+  if (!entry) throw new Error(`"${id}" is not in the catalog`);
+  const res = await fetch(entry.url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`download failed (HTTP ${res.status})`);
+  const code = await res.text();
+  const hash = require('crypto').createHash('sha256').update(code).digest('hex');
+  if (hash !== entry.sha256) throw new Error('the downloaded file does not match the catalog (try again later)');
+  return install(`${entry.id}.js`, code);
+}
+
+module.exports = { list, read, readBuiltin, toggle, remove, install, installFromFile, installFromUrl, registry, installFromRegistry };
